@@ -1,0 +1,140 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+// 定义股票数据接口，以匹配 API 返回的结构
+interface StockData {
+    stock_code: string;
+    stock_name: string;
+    entry_price: string;
+    // 其他字段...
+}
+
+// 定义组件内部使用的股票数据结构
+interface MappedStock {
+    ticker: string;
+    name: string;
+    price: number;
+    change: number;
+}
+
+const API_URL = "https://gateway.joinspace.pp.ua/trading-plus/strategy/trading?page=1&page_size=100";
+
+export default function StockList({ onSelect }: { onSelect: (stock: MappedStock) => void }) {
+    const [query, setQuery] = useState("");
+    const [sortBy, setSortBy] = useState("change");
+    const [stocks, setStocks] = useState<MappedStock[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // 使用 useEffect 获取数据
+    useEffect(() => {
+        const fetchStocks = async () => {
+            try {
+                const postData = {
+                    // 这里放置您需要发送到服务器的数据
+                    // 例如：page: 1, page_size: 100
+                };
+
+                const response = await fetch('/api/trading-plus/trading?page=1&page_size=100', {
+                    method: 'POST', // 明确指定为 POST 方法
+                    headers: {
+                        'Content-Type': 'application/json', // 告诉服务器，您发送的是 JSON 格式的数据
+                    },
+                    body: JSON.stringify(postData), // 将 JavaScript 对象转换为 JSON 字符串
+                });
+                console.log(response);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // 将 API 数据映射为组件所需格式
+                const mappedStocks: MappedStock[] = data.data.items.map((item: StockData) => ({
+                    ticker: item.stock_code,
+                    name: item.stock_name,
+                    price: parseFloat(item.entry_price),
+                    // ⚠️ 注意：API 缺少 change 字段，这里用随机数模拟
+                    change: parseFloat((Math.random() * 10 - 5).toFixed(2)),
+                }));
+
+                setStocks(mappedStocks);
+            } catch (e) {
+                console.error("Failed to fetch stock data:", e);
+                setError("Failed to load stock data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStocks();
+    }, []);
+
+    // 过滤和排序逻辑
+    const filtered = useMemo(() => {
+        if (!stocks) return [];
+
+        const q = query.trim().toLowerCase();
+        return stocks
+            .filter((s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+            .sort((a, b) => (sortBy === "price" ? b.price - a.price : b.change - a.change));
+    }, [query, sortBy, stocks]);
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-6 border-b">
+                <div className="flex items-center justify-between gap-2">
+                    <div>
+                        <div className="text-lg font-medium">Watchlist</div>
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search ticker or name"
+                            className="px-3 py-2 rounded border text-sm w-56"
+                        />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="px-2 py-2 rounded border text-sm"
+                        >
+                            <option value="change">Sort: Change</option>
+                            <option value="price">Sort: Price</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* 根据加载和错误状态显示不同的内容 */}
+            {loading ? (
+                <div className="p-3 text-center text-sm text-slate-500">Loading...</div>
+            ) : error ? (
+                <div className="p-3 text-center text-sm text-red-500">{error}</div>
+            ) : filtered.length > 0 ? (
+                <ul className="divide-y">
+                    {filtered.map((s) => (
+                        <li key={s.ticker} className="p-3 hover:bg-slate-50 cursor-pointer" onClick={() => onSelect(s)}>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="font-medium">{s.ticker} <span className="text-sm text-slate-500">{s.name}</span></div>
+                                    <div className="text-xs text-slate-400">Market · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-medium">${s.price.toFixed(2)}</div>
+                                    <div className={`text-sm ${s.change >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {s.change >= 0 ? '+' : ''}{s.change.toFixed(2)}%
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="p-3 text-center text-sm text-slate-500">No stocks found.</div>
+            )}
+
+            <div className="p-3 text-center text-xs text-slate-400">Demo data · Click a row to load chart</div>
+        </div>
+    );
+}
