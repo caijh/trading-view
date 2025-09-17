@@ -41,7 +41,7 @@ export default function KLineChart({ symbol = "AAPL.NS" }: { symbol: string }) {
         // Main Chart - Candlestick
         const mainChart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
-            height: 400,
+            height: 600,
             layout: {
                 background: { color: "#ffffff" },
                 textColor: "#0f172a",
@@ -67,7 +67,7 @@ export default function KLineChart({ symbol = "AAPL.NS" }: { symbol: string }) {
         // Volume Chart - Histogram
         const volumeChart = createChart(volumeContainerRef.current, {
             width: volumeContainerRef.current.clientWidth,
-            height: 100,
+            height: 300,
             layout: {
                 background: { color: "#ffffff" },
                 textColor: "#0f172a",
@@ -157,13 +157,13 @@ export default function KLineChart({ symbol = "AAPL.NS" }: { symbol: string }) {
             }
         };
 
-        fetchData();
+        fetchData().then(r => {});
     }, [symbol]);
 
     return (
         <div className="flex flex-col w-full h-full">
             <div ref={chartContainerRef} className="flex-grow"></div>
-            <div ref={volumeContainerRef} className="h-[100px]"></div>
+            <div ref={volumeContainerRef} className="h-[300px]"></div>
         </div>
     );
 }
