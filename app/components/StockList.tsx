@@ -36,7 +36,7 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
                     // 例如：page: 1, page_size: 100
                 };
 
-                const response = await fetch('/api/trading-plus/trading?page=1&page_size=100', {
+                const response = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=100', {
                     method: 'POST', // 明确指定为 POST 方法
                     headers: {
                         'Content-Type': 'application/json', // 告诉服务器，您发送的是 JSON 格式的数据
