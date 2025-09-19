@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
         return [
             {
                 source: '/api/trading-plus/:path*',
-                destination: 'https://gateway.joinspace.pp.ua/trading-plus/strategy/:path*',
+                destination: 'https://gateway.joinspace.pp.ua/trading-plus/:path*',
             },
             {
                 source: '/api/trading-data/:path*',

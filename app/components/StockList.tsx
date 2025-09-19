@@ -7,6 +7,8 @@ interface StockData {
     stock_code: string;
     stock_name: string;
     entry_price: string;
+    take_profit: string;
+    stop_loss: string;
     // 其他字段...
 }
 
@@ -15,7 +17,8 @@ interface MappedStock {
     ticker: string;
     name: string;
     price: number;
-    change: number;
+    take_profit: number;
+    stop_loss: number;
 }
 
 const API_URL = "https://gateway.joinspace.pp.ua/trading-plus/strategy/trading?page=1&page_size=100";
@@ -54,8 +57,8 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
                     ticker: item.stock_code,
                     name: item.stock_name,
                     price: parseFloat(item.entry_price),
-                    // ⚠️ 注意：API 缺少 change 字段，这里用随机数模拟
-                    change: parseFloat((Math.random() * 10 - 5).toFixed(2)),
+                    take_profit: parseFloat(item.take_profit),
+                    stop_loss: parseFloat(item.stop_loss),
                 }));
 
                 setStocks(mappedStocks);
@@ -77,7 +80,7 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
         const q = query.trim().toLowerCase();
         return stocks
             .filter((s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
-            .sort((a, b) => (sortBy === "price" ? b.price - a.price : b.change - a.change));
+            .sort((a, b) => (sortBy === "Price" ? b.price - a.price : ((b.take_profit -b.price) - (a.take_profit - a.price))));
     }, [query, sortBy, stocks]);
 
     return (
@@ -99,8 +102,8 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
                             onChange={(e) => setSortBy(e.target.value)}
                             className="px-2 py-2 rounded border text-sm"
                         >
-                            <option value="change">Sort: Change</option>
-                            <option value="price">Sort: Price</option>
+                            <option value="Profit">Sort: Profit</option>
+                            <option value="Price">Sort: Price</option>
                         </select>
                     </div>
                 </div>
@@ -121,10 +124,8 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
                                     <div className="text-xs text-slate-400">Market · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'}</div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="font-medium">${s.price.toFixed(2)}</div>
-                                    <div className={`text-sm ${s.change >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {s.change >= 0 ? '+' : ''}{s.change.toFixed(2)}%
-                                    </div>
+                                    <div className="font-medium">E: {s.price.toFixed(2)}</div>
+                                    <div className={`text-sm`}>P: {s.take_profit.toFixed(2)} L: {s.stop_loss.toFixed(2)}</div>
                                 </div>
                             </div>
                         </li>
