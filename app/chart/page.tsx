@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import KLineChart from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
 
 export default function ViewPage() {
-    const params = useParams();
-    const code = params?.code as string;
+    const searchParams = useSearchParams();
+    const code = searchParams.get("code");
 
     const [symbol, setSymbol] = useState<{ ticker: string; name: string }>({
         ticker: code || "AAPL.NS",
-        name: "Apple Inc.",
+        name: "",
     });
 
     // 每次路径 code 变化时更新 symbol

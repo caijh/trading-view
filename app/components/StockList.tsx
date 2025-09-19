@@ -21,7 +21,7 @@ interface MappedStock {
     stop_loss: number;
 }
 
-const API_URL = "https://gateway.joinspace.pp.ua/trading-plus/strategy/trading?page=1&page_size=100";
+const API_URL = "https://gateway.joinspace.pp.ua/trading-plus/strategy/trading?page=1&page_size=1000";
 
 export default function StockList({onSelect}: { onSelect: (stock: MappedStock) => void }) {
     const [query, setQuery] = useState("");
@@ -152,7 +152,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                 <div className="p-3 text-center text-sm text-slate-500">No stocks found.</div>
             )}
 
-            <div className="p-3 text-center text-xs text-slate-400">Demo data · Click a row to load chart</div>
+            <div className="p-3 text-center text-xs text-slate-400">· Click a row to load chart</div>
         </div>
     );
 }
