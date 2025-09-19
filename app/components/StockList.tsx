@@ -23,7 +23,7 @@ interface MappedStock {
 
 const API_URL = "https://gateway.joinspace.pp.ua/trading-plus/strategy/trading?page=1&page_size=100";
 
-export default function StockList({ onSelect }: { onSelect: (stock: MappedStock) => void }) {
+export default function StockList({onSelect}: { onSelect: (stock: MappedStock) => void }) {
     const [query, setQuery] = useState("");
     const [sortBy, setSortBy] = useState("change");
     const [stocks, setStocks] = useState<MappedStock[]>([]);
@@ -80,7 +80,7 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
         const q = query.trim().toLowerCase();
         return stocks
             .filter((s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
-            .sort((a, b) => (sortBy === "Price" ? b.price - a.price : ((b.take_profit -b.price) - (a.take_profit - a.price))));
+            .sort((a, b) => (sortBy === "Price" ? b.price - a.price : ((b.take_profit - b.price) - (a.take_profit - a.price))));
     }, [query, sortBy, stocks]);
 
     return (
@@ -120,12 +120,29 @@ export default function StockList({ onSelect }: { onSelect: (stock: MappedStock)
                         <li key={s.ticker} className="p-3 hover:bg-slate-50 cursor-pointer" onClick={() => onSelect(s)}>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <div className="font-medium">{s.ticker} <span className="text-sm text-slate-500">{s.name}</span></div>
-                                    <div className="text-xs text-slate-400">Market · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'}</div>
+                                    <div className="font-medium">{s.ticker} <span
+                                        className="text-sm text-slate-500">{s.name}</span></div>
+                                    <div className="text-xs text-slate-400">Market
+                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'}</div>
                                 </div>
-                                <div className="text-right">
-                                    <div className="font-medium">E: {s.price.toFixed(2)}</div>
-                                    <div className={`text-sm`}>P: {s.take_profit.toFixed(2)} L: {s.stop_loss.toFixed(2)}</div>
+                                <div className="text-right space-y-1">
+                                    {/* Entry 与价格同一行 */}
+                                    <div className="flex items-center justify-end gap-1 text-sm">
+                                        <span className="text-slate-500">Entry:</span>
+                                        <span className="font-semibold text-slate-800">
+      {s.price.toFixed(2)}
+    </span>
+                                    </div>
+
+                                    {/* TP / SL */}
+                                    <div className="flex justify-end gap-2 text-sm">
+    <span className="px-1.5 py-0.5 rounded bg-green-50 text-green-600">
+      TP {s.take_profit.toFixed(2)}
+    </span>
+                                        <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-600">
+      SL {s.stop_loss.toFixed(2)}
+    </span>
+                                    </div>
                                 </div>
                             </div>
                         </li>
