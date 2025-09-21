@@ -21,8 +21,6 @@ interface MappedStock {
     stop_loss: number;
 }
 
-const API_URL = "https://gateway.joinspace.pp.ua/trading-plus/strategy/trading?page=1&page_size=1000";
-
 export default function StockList({onSelect}: { onSelect: (stock: MappedStock) => void }) {
     const [query, setQuery] = useState("");
     const [sortBy, setSortBy] = useState("change");
@@ -39,7 +37,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                     // 例如：page: 1, page_size: 100
                 };
 
-                const response = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=100', {
+                const response = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=1000', {
                     method: 'POST', // 明确指定为 POST 方法
                     headers: {
                         'Content-Type': 'application/json', // 告诉服务器，您发送的是 JSON 格式的数据
