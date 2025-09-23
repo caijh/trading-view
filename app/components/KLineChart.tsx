@@ -10,6 +10,7 @@ import {
     ISeriesApi,
     OhlcData,
     UTCTimestamp,
+    SeriesMarker, createSeriesMarkers, ISeriesMarkersPluginApi, Time
 } from "lightweight-charts";
 
 // Utility function to sync time scales of multiple charts
@@ -39,6 +40,7 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
     const volumeChartRef = useRef<IChartApi | null>(null);
 
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+    const candleSeriesMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
     const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
     // keep refs for any line series we add so we can manage/cleanup later if needed
@@ -74,6 +76,7 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
             wickUpColor: "#ef4444",
             wickDownColor: "#16a34a",
         });
+        candleSeriesMarkersRef.current = createSeriesMarkers(candleSeriesRef.current, [])
 
         // Volume Chart - Histogram
         const volumeChart = createChart(volumeContainerRef.current, {
@@ -282,6 +285,51 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                             ]);
                             trendLinesRef.current.push(downLine);
                         }
+                    }
+
+                    // --- 修复标记（Markers）逻辑 ---
+                    if (info.candlestick_patterns && Array.isArray(info.candlestick_patterns)) {
+                        const markerMap = new Map<UTCTimestamp, SeriesMarker<UTCTimestamp>>();
+
+                        info.candlestick_patterns.forEach((pattern: any) => {
+                            pattern.match_indexes.forEach((dateStr: string) => {
+                                const ts = Math.floor(new Date(dateStr).getTime() / 1000) as UTCTimestamp;
+
+                                let color = "#facc15"; // neutral
+                                let shape: "arrowUp" | "arrowDown" | "circle" = "circle";
+                                let position: "aboveBar" | "belowBar" = "aboveBar";
+
+                                if (info.candlestick_signal === 1) { // 看涨
+                                    color = "#22c55e"; // green
+                                    shape = "arrowUp";
+                                    position = "belowBar";
+                                } else if (info.candlestick_signal === -1) { // 看跌
+                                    color = "#ef4444"; // red
+                                    shape = "arrowDown";
+                                    position = "aboveBar";
+                                }
+
+                                // 如果同一天已有 marker，则合并文字
+                                if (markerMap.has(ts)) {
+                                    const existing = markerMap.get(ts)!;
+                                    existing.text = existing.text
+                                        ? `${existing.text}, ${pattern.label}`
+                                        : pattern.label;
+                                    // 保持颜色/形状/位置不变（或根据优先级更新）
+                                } else {
+                                    markerMap.set(ts, {
+                                        time: ts,
+                                        position,
+                                        color,
+                                        shape,
+                                        text: pattern.label,
+                                    });
+                                }
+                            });
+                        });
+
+                        const markers = Array.from(markerMap.values());
+                        candleSeriesMarkersRef.current?.setMarkers(markers);
                     }
                 }
             } catch (e) {
