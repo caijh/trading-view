@@ -4,13 +4,16 @@ import React, { useEffect, useRef } from "react";
 import {
     CandlestickSeries,
     createChart,
+    createSeriesMarkers,
     HistogramSeries,
-    LineSeries,
     IChartApi,
     ISeriesApi,
+    ISeriesMarkersPluginApi,
+    LineSeries,
     OhlcData,
-    UTCTimestamp,
-    SeriesMarker, createSeriesMarkers, ISeriesMarkersPluginApi, Time
+    SeriesMarker,
+    Time,
+    UTCTimestamp
 } from "lightweight-charts";
 
 // Utility function to sync time scales of multiple charts
@@ -287,6 +290,61 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                         }
                     }
 
+                    let markers: SeriesMarker<UTCTimestamp>[] = []
+                    // --- 转折点数组 (箭头自动方向+颜色) ---
+                    if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
+                        const turningPoints = info.turning
+                            .map((item: { time: string; type: number }) => {
+                                const ts = Math.floor(new Date(item.time).getTime() / 1000) as UTCTimestamp;
+                                const p = findClosestPoint(klineData, ts);
+                                if (!p) return null;
+
+                                return {
+                                    time: p.time,
+                                    value: item.type === 1 ? p.low : p.high,
+                                };
+                            })
+                            .filter(Boolean) as { time: UTCTimestamp; value: number }[];
+
+                        if (turningPoints.length > 1 && mainChartRef.current) {
+                            const turningLine = mainChartRef.current.addSeries(LineSeries, {
+                                color: "#374151", // 黑色带一点灰
+                                lineWidth: 2,
+                            });
+                            turningLine.setData(turningPoints);
+                            trendLinesRef.current.push(turningLine);
+
+                            // 最后一个点决定箭头方向
+                            const last = turningPoints[turningPoints.length - 1];
+                            const prev = turningPoints[turningPoints.length - 2];
+
+                            let markerColor = "#6b7280"; // 默认灰
+                            let markerShape: "arrowUp" | "arrowDown" | "circle" = "circle";
+                            let markerPosition: "aboveBar" | "belowBar" = "aboveBar";
+
+                            if (last.value < prev.value) {
+                                // 上涨转折
+                                markerColor = "#22c55e"; // 绿色
+                                markerShape = "arrowUp";
+                                markerPosition = "belowBar";
+                            } else if (last.value > prev.value) {
+                                // 下跌转折
+                                markerColor = "#ef4444"; // 红色
+                                markerShape = "arrowDown";
+                                markerPosition = "aboveBar";
+                            }
+
+                            markers.push({
+                                time: last.time,
+                                position: markerPosition,
+                                color: markerColor,
+                                shape: markerShape,
+                                text: "Turning",
+                            });
+                        }
+                    }
+
+
                     // --- 修复标记（Markers）逻辑 ---
                     if (info.candlestick_patterns && Array.isArray(info.candlestick_patterns)) {
                         const markerMap = new Map<UTCTimestamp, SeriesMarker<UTCTimestamp>>();
@@ -328,9 +386,9 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                             });
                         });
 
-                        const markers = Array.from(markerMap.values());
-                        candleSeriesMarkersRef.current?.setMarkers(markers);
+                        markers.push(...(Array.from(markerMap.values())));
                     }
+                    candleSeriesMarkersRef.current?.setMarkers(markers);
                 }
             } catch (e) {
                 console.error("Failed to fetch K-line or analysis data:", e);
