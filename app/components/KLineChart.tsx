@@ -290,7 +290,7 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                         }
                     }
 
-                    let markers: SeriesMarker<UTCTimestamp>[] = []
+                    const markers: SeriesMarker<UTCTimestamp>[] = []
                     // --- 转折点数组 (箭头自动方向+颜色) ---
                     if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
                         const turningPoints = info.turning
