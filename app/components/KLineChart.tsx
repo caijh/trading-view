@@ -250,45 +250,105 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
 
                     // --- 向上转折点 (蓝线) ---
                     if (info.turning_up_point_1 && info.turning_up_point_2) {
-                        const up1 = Math.floor(new Date(info.turning_up_point_1 + " 00:00:00").getTime() / 1000);
-                        const up2 = Math.floor(new Date(info.turning_up_point_2 + " 00:00:00").getTime() / 1000);
+                        const up2 = Math.floor(new Date(info.turning_up_point_1 + " 00:00:00").getTime() / 1000);
+                        const up1 = Math.floor(new Date(info.turning_up_point_2 + " 00:00:00").getTime() / 1000);
 
                         const p1 = findClosestPoint(klineData, up1);
                         const p2 = findClosestPoint(klineData, up2);
 
                         if (p1 && p2 && mainChartRef.current) {
+                            const idx1 = klineData.findIndex(d => d.time === p1.time);
+                            const idx2 = klineData.findIndex(d => d.time === p2.time);
+                            const idxLast = klineData.length - 1;
+                            const last = klineData[idxLast];
+
+                            // 将 time 映射为索引，避免直接用 timestamp 算斜率
+                            const x1 = idx1;
+                            const x2 = idx2;
+                            const y1 = p1.low;
+                            const y2 = p2.low;
+
+                            const slope = (y2 - y1) / (x2 - x1);
+                            const intercept = y1 - slope * x1;
+                            const yLast = slope * idxLast + intercept;
+
+                            // --- 实线部分 ---
                             const upLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
                                 lineWidth: 2,
+                                lineStyle: 0, // 实线
                             });
                             upLine.setData([
-                                {time: p2.time, value: p2.low},
-                                {time: p1.time, value: p1.low},
+                                { time: p1.time, value: p1.low },
+                                { time: p2.time, value: p2.low },
                             ]);
                             trendLinesRef.current.push(upLine);
+
+                            // --- 虚线延伸部分 ---
+                            const dashedLine = mainChartRef.current.addSeries(LineSeries, {
+                                color: "#3b82f6",
+                                lineWidth: 2,
+                                lineStyle: 1, // 虚线
+                            });
+                            dashedLine.setData([
+                                { time: p2.time, value: p2.low },
+                                { time: last.time, value: yLast },
+                            ]);
+                            trendLinesRef.current.push(dashedLine);
                         }
                     }
 
+
                     // --- 向下转折点 (橙线) ---
                     if (info.turning_down_point_1 && info.turning_down_point_2) {
-                        const dn1 = Math.floor(new Date(info.turning_down_point_1 + " 00:00:00").getTime() / 1000);
-                        const dn2 = Math.floor(new Date(info.turning_down_point_2 + " 00:00:00").getTime() / 1000);
+                        const dn2 = Math.floor(new Date(info.turning_down_point_1 + " 00:00:00").getTime() / 1000);
+                        const dn1 = Math.floor(new Date(info.turning_down_point_2 + " 00:00:00").getTime() / 1000);
 
                         const p1 = findClosestPoint(klineData, dn1);
                         const p2 = findClosestPoint(klineData, dn2);
 
                         if (p1 && p2 && mainChartRef.current) {
+                            const idx1 = klineData.findIndex(d => d.time === p1.time);
+                            const idx2 = klineData.findIndex(d => d.time === p2.time);
+                            const idxLast = klineData.length - 1;
+                            const last = klineData[idxLast];
+
+                            // 将 time 映射为索引，计算线性方程
+                            const x1 = idx1;
+                            const x2 = idx2;
+                            const y1 = p1.high;
+                            const y2 = p2.high;
+
+                            const slope = (y2 - y1) / (x2 - x1);
+                            const intercept = y1 - slope * x1;
+                            const yLast = slope * idxLast + intercept;
+
+                            // --- 实线部分 ---
                             const downLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#f97316",
+                                color: "#f97316", // 橙色
                                 lineWidth: 2,
+                                lineStyle: 0, // 实线
                             });
                             downLine.setData([
-                                {time: p2.time, value: p2.high},
-                                {time: p1.time, value: p1.high},
+                                { time: p1.time, value: p1.high },
+                                { time: p2.time, value: p2.high },
                             ]);
                             trendLinesRef.current.push(downLine);
+
+                            // --- 虚线延伸部分 ---
+                            const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
+                                color: "#f97316",
+                                lineWidth: 2,
+                                lineStyle: 1, // 虚线
+                            });
+                            dashedDownLine.setData([
+                                { time: p2.time, value: p2.high },
+                                { time: last.time, value: yLast },
+                            ]);
+                            trendLinesRef.current.push(dashedDownLine);
                         }
                     }
+
 
                     const markers: SeriesMarker<UTCTimestamp>[] = []
                     // --- 转折点数组 (箭头自动方向+颜色) ---
