@@ -34,6 +34,25 @@ const findClosestPoint = (data: OhlcData[], targetTime: number): OhlcData | null
     return data.find(d => d.time === targetTime) || null;
 };
 
+
+// Compute Exponential Moving Average (EMA)
+const calculateEMA = (data: OhlcData[], period: number): OhlcData[] => {
+    let ema: OhlcData[] = [];
+    let k = 2 / (period + 1); // smoothing factor
+    let previousEMA = data[0].close; // First EMA is just the first close
+
+    for (let i = 0; i < data.length; i++) {
+        const current = data[i];
+        const currentEMA = current.close * k + previousEMA * (1 - k);
+        // @ts-ignore
+        ema.push({...current, value: currentEMA}); // Store value as 'value' key
+
+        previousEMA = currentEMA;
+    }
+
+    return ema;
+};
+
 // Main KLineChart component
 export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +68,8 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
     // keep refs for any line series we add so we can manage/cleanup later if needed
     const trendLinesRef = useRef<ISeriesApi<"Line">[]>([]);
     const priceLinesRef = useRef<any[]>([]); // price line objects (no strict typing here)
+
+    const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined); // Store EMA5 series
 
     // Initialize charts (runs once)
     useEffect(() => {
@@ -202,8 +223,19 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
 
                 // Set data to the charts
                 candleSeriesRef.current?.setData(klineData);
-                volumeSeriesRef.current?.setData(volumeData);
+                volumeSeriesRef.current?.setData(volumeData)
 
+                // Calculate EMA5 data
+                const eam5Data = calculateEMA(klineData, 5);
+                // Add EMA5 Line
+                if (!eam5SeriesRef.current) {
+                    eam5SeriesRef.current = mainChartRef.current?.addSeries(LineSeries, {
+                        color: "#ff6347", // Tomato color for EMA5
+                        lineWidth: 2,
+                        lineStyle: 0, // Solid line
+                    });
+                }
+                eam5SeriesRef.current?.setData(eam5Data);
                 // Fit content to view
                 mainChartRef.current?.timeScale().fitContent();
                 volumeChartRef.current?.timeScale().fitContent();
@@ -279,8 +311,8 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                                 lineStyle: 0, // 实线
                             });
                             upLine.setData([
-                                { time: p1.time, value: p1.low },
-                                { time: p2.time, value: p2.low },
+                                {time: p1.time, value: p1.low},
+                                {time: p2.time, value: p2.low},
                             ]);
                             trendLinesRef.current.push(upLine);
 
@@ -291,8 +323,8 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                                 lineStyle: 1, // 虚线
                             });
                             dashedLine.setData([
-                                { time: p2.time, value: p2.low },
-                                { time: last.time, value: yLast },
+                                {time: p2.time, value: p2.low},
+                                {time: last.time, value: yLast},
                             ]);
                             trendLinesRef.current.push(dashedLine);
                         }
@@ -330,8 +362,8 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                                 lineStyle: 0, // 实线
                             });
                             downLine.setData([
-                                { time: p1.time, value: p1.high },
-                                { time: p2.time, value: p2.high },
+                                {time: p1.time, value: p1.high},
+                                {time: p2.time, value: p2.high},
                             ]);
                             trendLinesRef.current.push(downLine);
 
@@ -342,8 +374,8 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                                 lineStyle: 1, // 虚线
                             });
                             dashedDownLine.setData([
-                                { time: p2.time, value: p2.high },
-                                { time: last.time, value: yLast },
+                                {time: p2.time, value: p2.high},
+                                {time: last.time, value: yLast},
                             ]);
                             trendLinesRef.current.push(dashedDownLine);
                         }
