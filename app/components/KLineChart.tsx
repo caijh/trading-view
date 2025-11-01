@@ -44,7 +44,7 @@ const calculateEMA = (data: OhlcData[], period: number): OhlcData[] => {
     for (let i = 0; i < data.length; i++) {
         const current = data[i];
         const currentEMA = current.close * k + previousEMA * (1 - k);
-        // @ts-expect-error
+        // @ts-expect-error: The 'value' property is not present on the original type, but it's being added here to store the EMA value
         ema.push({...current, value: currentEMA}); // Store value as 'value' key
 
         previousEMA = currentEMA;
