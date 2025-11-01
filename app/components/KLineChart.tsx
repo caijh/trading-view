@@ -37,14 +37,14 @@ const findClosestPoint = (data: OhlcData[], targetTime: number): OhlcData | null
 
 // Compute Exponential Moving Average (EMA)
 const calculateEMA = (data: OhlcData[], period: number): OhlcData[] => {
-    let ema: OhlcData[] = [];
-    let k = 2 / (period + 1); // smoothing factor
+    const ema: OhlcData[] = [];
+    const k = 2 / (period + 1); // smoothing factor
     let previousEMA = data[0].close; // First EMA is just the first close
 
     for (let i = 0; i < data.length; i++) {
         const current = data[i];
         const currentEMA = current.close * k + previousEMA * (1 - k);
-        // @ts-ignore
+        // @ts-expect-error
         ema.push({...current, value: currentEMA}); // Store value as 'value' key
 
         previousEMA = currentEMA;
