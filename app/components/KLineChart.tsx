@@ -53,6 +53,24 @@ const calculateEMA = (data: OhlcData[], period: number): OhlcData[] => {
     return ema;
 };
 
+// Compute Simple Moving Average (SMA)
+const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
+    const sma: OhlcData[] = [];
+    for (let i = 0; i < data.length; i++) {
+        if (i < period - 1) continue; // 简单移动平均线前 N-1 个点无法计算
+
+        let sum = 0;
+        for (let j = 0; j < period; j++) {
+            sum += data[i - j].close;
+        }
+        const avg = sum / period;
+
+        // @ts-expect-error: adding 'value' for LineSeries
+        sma.push({ ...data[i], value: avg });
+    }
+    return sma;
+};
+
 // Main KLineChart component
 export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +88,7 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
     const priceLinesRef = useRef<any[]>([]); // price line objects (no strict typing here)
 
     const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined); // Store EMA5 series
-
+    const sma20SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
     // Initialize charts (runs once)
     useEffect(() => {
         if (!chartContainerRef.current || !volumeContainerRef.current) return;
@@ -233,9 +251,21 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
                         color: "#ff6347", // Tomato color for EMA5
                         lineWidth: 2,
                         lineStyle: 0, // Solid line
+                        title: 'EMA5'
                     });
                 }
                 eam5SeriesRef.current?.setData(eam5Data);
+                const sma20Data = calculateSMA(klineData, 20);
+
+                if (!sma20SeriesRef.current) {
+                    sma20SeriesRef.current = mainChartRef.current?.addSeries(LineSeries, {
+                        color: "#8b5cf6", // 使用紫色 (Violet) 以区别 EMA5 (番茄红)
+                        lineWidth: 2,
+                        lineStyle: 0,
+                        title: "SMA20",   // 方便之后显示 tooltip 区分
+                    });
+                }
+                sma20SeriesRef.current?.setData(sma20Data);
                 // Fit content to view
                 mainChartRef.current?.timeScale().fitContent();
                 volumeChartRef.current?.timeScale().fitContent();
