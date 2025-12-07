@@ -9,7 +9,7 @@ interface StockData {
     entry_price: string;
     take_profit: string;
     stop_loss: string;
-    // 其他字段...
+    strategy_name: string;
 }
 
 // 定义组件内部使用的股票数据结构
@@ -19,6 +19,7 @@ interface MappedStock {
     price: number;
     take_profit: number;
     stop_loss: number;
+    strategy_name: string;
 }
 
 export default function StockList({onSelect}: { onSelect: (stock: MappedStock) => void }) {
@@ -57,6 +58,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                     price: parseFloat(item.entry_price),
                     take_profit: parseFloat(item.take_profit),
                     stop_loss: parseFloat(item.stop_loss),
+                    strategy_name: item.strategy_name,
                 }));
 
                 setStocks(mappedStocks);
@@ -68,7 +70,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
             }
         };
 
-        fetchStocks();
+        fetchStocks().then(r => {});
     }, []);
 
     // 过滤和排序逻辑
@@ -121,7 +123,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                                     <div className="font-medium">{s.ticker} <span
                                         className="text-sm text-slate-500">{s.name}</span></div>
                                     <div className="text-xs text-slate-400">Market
-                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'}</div>
+                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name}</div>
                                 </div>
                                 <div className="text-right space-y-1">
                                     {/* Entry 与价格同一行 */}
