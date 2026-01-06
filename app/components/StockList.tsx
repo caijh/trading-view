@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FaSyncAlt } from "react-icons/fa";
 
 // 定义股票数据接口，以匹配 API 返回的结构
 interface StockData {
@@ -29,49 +30,56 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const fetchStocks = async () => {
+        try {
+            const postData = {
+                // 这里放置您需要发送到服务器的数据
+                // 例如：page: 1, page_size: 100
+            };
+
+            const response = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=1000', {
+                method: 'POST', // 明确指定为 POST 方法
+                headers: {
+                    'Content-Type': 'application/json', // 告诉服务器，您发送的是 JSON 格式的数据
+                },
+                body: JSON.stringify(postData), // 将 JavaScript 对象转换为 JSON 字符串
+            });
+            console.log(response);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            // 将 API 数据映射为组件所需格式
+            const mappedStocks: MappedStock[] = data.data.items.map((item: StockData) => ({
+                ticker: item.stock_code,
+                name: item.stock_name,
+                price: parseFloat(item.entry_price),
+                take_profit: parseFloat(item.take_profit),
+                stop_loss: parseFloat(item.stop_loss),
+                strategy_name: item.strategy_name,
+            }));
+
+            setStocks(mappedStocks);
+        } catch (e) {
+            console.error("Failed to fetch stock data:", e);
+            setError("Failed to load stock data.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 使用 useEffect 获取数据
     useEffect(() => {
-        const fetchStocks = async () => {
-            try {
-                const postData = {
-                    // 这里放置您需要发送到服务器的数据
-                    // 例如：page: 1, page_size: 100
-                };
-
-                const response = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=1000', {
-                    method: 'POST', // 明确指定为 POST 方法
-                    headers: {
-                        'Content-Type': 'application/json', // 告诉服务器，您发送的是 JSON 格式的数据
-                    },
-                    body: JSON.stringify(postData), // 将 JavaScript 对象转换为 JSON 字符串
-                });
-                console.log(response);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-
-                // 将 API 数据映射为组件所需格式
-                const mappedStocks: MappedStock[] = data.data.items.map((item: StockData) => ({
-                    ticker: item.stock_code,
-                    name: item.stock_name,
-                    price: parseFloat(item.entry_price),
-                    take_profit: parseFloat(item.take_profit),
-                    stop_loss: parseFloat(item.stop_loss),
-                    strategy_name: item.strategy_name,
-                }));
-
-                setStocks(mappedStocks);
-            } catch (e) {
-                console.error("Failed to fetch stock data:", e);
-                setError("Failed to load stock data.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchStocks().then(r => {});
     }, []);
+
+    const reloadStocks = () => {
+        setLoading(true);
+        setError(null);
+        fetchStocks().then(r => {}); // 重新加载数据
+    };
+
 
     // 过滤和排序逻辑
     const filtered = useMemo(() => {
@@ -152,7 +160,15 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                 <div className="p-3 text-center text-sm text-slate-500">No stocks found.</div>
             )}
 
-            <div className="p-3 text-center text-xs text-slate-400">· Click a row to load chart</div>
+            <div className="p-3 text-center text-xs text-slate-400">· Click a row to load chart ·
+                <span className="mx-1"> </span>
+                <button
+                    title="Reload Stocks"
+                    onClick={reloadStocks}
+                    className="text-blue-500 hover:text-blue-600"
+                >
+                    <FaSyncAlt /> {/* Font Awesome Sync icon */}
+                </button></div>
         </div>
     );
 }
