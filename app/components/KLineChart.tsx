@@ -72,7 +72,7 @@ const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
 };
 
 // Main KLineChart component
-export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
+export default function KLineChart({ symbol, onAnalysisData }: { symbol: string, onAnalysisData: (data: any) => void }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const volumeContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -278,7 +278,7 @@ export default function KLineChart({symbol = "AAPL.NS"}: { symbol: string }) {
 
                 if (analysisJson.code === 0 && analysisJson.data) {
                     const info = analysisJson.data;
-
+                    onAnalysisData(info);
                     // --- 支撑线 ---
                     if (info.support) {
                         try {
