@@ -70,7 +70,7 @@ export default function Chart() {
                 </main>
                 {/* Modal to display analysis data */}
                 {showModal && analysisData && (
-                    <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10 max-w-xs">
+                    <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10">
                         <div className="space-y-2 text-left">
                             <div className="flex justify-between">
                                 <div><strong>Support:</strong></div>
