@@ -94,7 +94,11 @@ export default function Chart() {
                             </div>
                             <div className="flex justify-between">
                                 <div><strong>Patterns:</strong></div>
-                                <div>{analysisData.patterns.join(", ")}</div>
+                                <div>
+                                    {Array.isArray(analysisData.patterns)
+                                        ? analysisData.patterns.join(", ")
+                                        : "No patterns available"}
+                                </div>
                             </div>
                         </div>
                         {/* Close button */}
