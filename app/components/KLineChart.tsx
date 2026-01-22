@@ -15,6 +15,11 @@ import {
     Time,
     UTCTimestamp
 } from "lightweight-charts";
+import { parse } from "date-fns";
+// @ts-ignore
+import enUS from 'date-fns/locale/en-US'
+// @ts-ignore
+import zhCN from 'date-fns/locale/zh-CN'
 
 // Utility function to sync time scales of multiple charts
 const syncCharts = (charts: IChartApi[]) => {
@@ -71,6 +76,22 @@ const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
     return sma;
 };
 
+const getTime = (symbol: string, date: string) : UTCTimestamp => {
+    let locale = enUS
+    let time_str = date + "160000"
+    if (symbol.endsWith('.SH') || symbol.endsWith('.SZ')) {
+        time_str = date + "150000"
+        locale = zhCN
+    }
+    if (symbol.endsWith('.HK')){
+        locale = zhCN
+    }
+    let time = parse(time_str, 'yyyyMMddHHmmss', new Date(),{
+        locale: locale
+    })
+    return Math.floor(time.getTime() / 1000) as UTCTimestamp
+}
+
 // Main KLineChart component
 export default function KLineChart({ symbol, onAnalysisData }: { symbol: string, onAnalysisData: (data: any) => void }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
@@ -89,6 +110,11 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
 
     const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined); // Store EMA5 series
     const sma20SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
+    let locale = 'ja-JP'
+    if (symbol.endsWith('.NS')){
+        locale = 'en-US'
+    }
+
     // Initialize charts (runs once)
     useEffect(() => {
         if (!chartContainerRef.current || !volumeContainerRef.current) return;
@@ -106,6 +132,12 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
             },
             timeScale: {
                 visible: false,
+            },
+        });
+        mainChart.applyOptions({
+            localization: {
+                locale: locale,
+                dateFormat: 'yyyy-MM-dd'
             },
         });
         mainChartRef.current = mainChart;
@@ -134,6 +166,12 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
             timeScale: {
                 borderVisible: false,
                 timeVisible: true,
+            },
+        });
+        volumeChart.applyOptions({
+            localization: {
+                locale: locale,
+                dateFormat: 'yyyy-MM-dd'
             },
         });
         volumeChartRef.current = volumeChart;
@@ -199,11 +237,7 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
 
                 // Map API data to Lightweight Charts format
                 const klineData: OhlcData[] = data.data.map((d: any) => ({
-                    time: Math.floor(
-                        new Date(
-                            `${String(d.date).slice(0, 4)}-${String(d.date).slice(4, 6)}-${String(d.date).slice(6, 8)}  00:00:00`
-                        ).getTime() / 1000
-                    ) as UTCTimestamp,
+                    time: getTime(symbol, d.date),
                     open: parseFloat(d.open),
                     high: parseFloat(d.high),
                     low: parseFloat(d.low),
@@ -312,8 +346,8 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
 
                     // --- 向上转折点 (蓝线) ---
                     if (info.turning_up_point_1 && info.turning_up_point_2) {
-                        const up2 = Math.floor(new Date(info.turning_up_point_1 + " 00:00:00").getTime() / 1000);
-                        const up1 = Math.floor(new Date(info.turning_up_point_2 + " 00:00:00").getTime() / 1000);
+                        const up2 = getTime(symbol, info.turning_up_point_1.replaceAll('-', ''));
+                        const up1 = getTime(symbol, info.turning_up_point_2.replaceAll('-', ''));
 
                         const p1 = findClosestPoint(klineData, up1);
                         const p2 = findClosestPoint(klineData, up2);
@@ -363,8 +397,8 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
 
                     // --- 向下转折点 (橙线) ---
                     if (info.turning_down_point_1 && info.turning_down_point_2) {
-                        const dn2 = Math.floor(new Date(info.turning_down_point_1 + " 00:00:00").getTime() / 1000);
-                        const dn1 = Math.floor(new Date(info.turning_down_point_2 + " 00:00:00").getTime() / 1000);
+                        const dn2 = getTime(symbol, info.turning_down_point_1.replaceAll('-', ''));
+                        const dn1 = getTime(symbol, info.turning_down_point_2.replaceAll('-', ''));
 
                         const p1 = findClosestPoint(klineData, dn1);
                         const p2 = findClosestPoint(klineData, dn2);
@@ -417,7 +451,8 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
                     if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
                         const turningPoints = info.turning
                             .map((item: { time: string; type: number }) => {
-                                const ts = Math.floor(new Date(item.time).getTime() / 1000) as UTCTimestamp;
+                                const time = item.time.split(' ')[0].replaceAll('-', '')
+                                const ts = getTime(symbol, time);
                                 const p = findClosestPoint(klineData, ts);
                                 if (!p) return null;
 
