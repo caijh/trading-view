@@ -96,7 +96,7 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
         // Main Chart - Candlestick
         const mainChart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
-            height: 600,
+            height: window.innerHeight - 500,
             layout: {
                 background: {color: "#ffffff"},
                 textColor: "#0f172a",
