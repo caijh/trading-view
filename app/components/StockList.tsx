@@ -11,6 +11,7 @@ interface StockData {
     take_profit: string;
     stop_loss: string;
     strategy_name: string;
+    holding: boolean;
 }
 
 // 定义组件内部使用的股票数据结构
@@ -21,6 +22,7 @@ interface MappedStock {
     take_profit: number;
     stop_loss: number;
     strategy_name: string;
+    holding: boolean;
 }
 
 export default function StockList({onSelect}: { onSelect: (stock: MappedStock) => void }) {
@@ -58,6 +60,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                 take_profit: parseFloat(item.take_profit),
                 stop_loss: parseFloat(item.stop_loss),
                 strategy_name: item.strategy_name,
+                holding: item.holding,
             }));
 
             setStocks(mappedStocks);
@@ -128,8 +131,12 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
                         <li key={s.ticker} className="p-3 hover:bg-slate-50 cursor-pointer" onClick={() => onSelect(s)}>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <div className="font-medium">{s.ticker} <span
-                                        className="text-sm text-slate-500">{s.name}</span></div>
+                                    <div className="flex items-center">
+                                        <span
+                                            className={`w-2.5 h-2.5 rounded-full mr-2 ${s.holding ? 'bg-red-500' : 'bg-white border-2 border-gray-300'}`}
+                                        />
+                                        <div className="font-medium">{s.ticker} <span className="text-sm text-slate-500">{s.name}</span></div>
+                                    </div>
                                     <div className="text-xs text-slate-400">Market
                                         · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name}</div>
                                 </div>
