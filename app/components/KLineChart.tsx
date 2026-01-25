@@ -20,6 +20,7 @@ import { parse } from "date-fns";
 import enUS from 'date-fns/locale/en-US'
 // @ts-ignore
 import zhCN from 'date-fns/locale/zh-CN'
+import toast from "react-hot-toast";
 
 // Utility function to sync time scales of multiple charts
 const syncCharts = (charts: IChartApi[]) => {
@@ -229,10 +230,15 @@ export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: s
                 // Fetch K线数据
                 const API_URL = `/api/trading-data/stock/price/daily?code=${symbol}`;
                 const response = await fetch(API_URL);
+                if (!response.ok) {
+                    toast.error(`HTTP error! status: ${response.status}`);
+                    return;
+                }
                 const data = await response.json();
 
                 if (data.code !== 0 || !data.data || data.data.length === 0) {
-                    throw new Error("No data received or API error");
+                    toast.error("No data received or API error");
+                    return;
                 }
 
                 // Map API data to Lightweight Charts format

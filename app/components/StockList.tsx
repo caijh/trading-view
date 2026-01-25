@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FaSyncAlt } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 // 定义股票数据接口，以匹配 API 返回的结构
 interface StockData {
@@ -46,9 +47,9 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 },
                 body: JSON.stringify(postData), // 将 JavaScript 对象转换为 JSON 字符串
             });
-            console.log(response);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                toast.error(`HTTP error! status: ${response.status}`);
+                return;
             }
             const data = await response.json();
 
