@@ -25,7 +25,7 @@ interface MappedStock {
     holding: boolean;
 }
 
-export default function StockList({onSelect}: { onSelect: (stock: MappedStock) => void }) {
+export default function StockList({onSelectAction}: { onSelectAction: (stock: MappedStock) => void }) {
     const [query, setQuery] = useState("");
     const [sortBy, setSortBy] = useState("change");
     const [stocks, setStocks] = useState<MappedStock[]>([]);
@@ -128,7 +128,7 @@ export default function StockList({onSelect}: { onSelect: (stock: MappedStock) =
             ) : filtered.length > 0 ? (
                 <ul className="divide-y">
                     {filtered.map((s) => (
-                        <li key={s.ticker} className="p-3 hover:bg-slate-50 cursor-pointer" onClick={() => onSelect(s)}>
+                        <li key={s.ticker} className="p-3 hover:bg-slate-50 cursor-pointer" onClick={() => onSelectAction(s)}>
                             <div className="flex items-center justify-between">
                                 <div>
                                     <div className="flex items-center">

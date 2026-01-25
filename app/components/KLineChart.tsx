@@ -93,7 +93,7 @@ const getTime = (symbol: string, date: string) : UTCTimestamp => {
 }
 
 // Main KLineChart component
-export default function KLineChart({ symbol, onAnalysisData }: { symbol: string, onAnalysisData: (data: any) => void }) {
+export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: string, onAnalysisDataAction: (data: any) => void }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const volumeContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -312,7 +312,7 @@ export default function KLineChart({ symbol, onAnalysisData }: { symbol: string,
 
                 if (analysisJson.code === 0 && analysisJson.data) {
                     const info = analysisJson.data;
-                    onAnalysisData(info);
+                    onAnalysisDataAction(info);
                     // --- 支撑线 ---
                     if (info.support) {
                         try {

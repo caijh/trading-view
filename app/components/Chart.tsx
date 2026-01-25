@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import KLineChart from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
 
@@ -59,13 +59,13 @@ export default function Chart() {
                         </div>
 
                         <div className="p-4">
-                            <KLineChart symbol={symbol.ticker} onAnalysisData={handleAnalysisData}/>
+                            <KLineChart symbol={symbol.ticker} onAnalysisDataAction={handleAnalysisData}/>
                         </div>
                     </section>
 
                     {/* right: stock list */}
                     <aside className="col-span-3 h-full overflow-y-auto">
-                        <StockList onSelect={(s) => setSymbol(s)} />
+                        <StockList onSelectAction={(s) => setSymbol(s)} />
                     </aside>
                 </main>
                 {/* Modal to display analysis data */}
