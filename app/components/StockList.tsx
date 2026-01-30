@@ -107,12 +107,12 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="Search ticker or name"
-                            className="px-3 py-2 rounded border text-sm w-56"
+                            className="px-2 py-1 rounded border text-xs w-36"
                         />
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="px-2 py-2 rounded border text-sm"
+                            className="px-2 py-1 rounded border text-xs"
                         >
                             <option value="Profit">Sort: Profit</option>
                             <option value="Price">Sort: Price</option>
