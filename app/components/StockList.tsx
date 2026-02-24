@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaSyncAlt, FaGlasses } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -84,6 +84,60 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
         fetchStocks().then(r => {}); // 重新加载数据
     };
 
+    // Custom dropdown component for selecting sort option (rendered below)
+    function CustomSortDropdown({ sortBy, onChange }: { sortBy: string; onChange: (v: string) => void }) {
+        const options = [
+            { value: "Profit", label: "Sort: Profit" },
+            { value: "Price", label: "Sort: Price" },
+        ];
+        const [open, setOpen] = useState(false);
+        const ref = useRef<HTMLDivElement | null>(null);
+
+        useEffect(() => {
+            function handleClick(e: MouseEvent) {
+                if (ref.current && !ref.current.contains(e.target as Node)) {
+                    setOpen(false);
+                }
+            }
+            document.addEventListener("mousedown", handleClick);
+            return () => document.removeEventListener("mousedown", handleClick);
+        }, []);
+
+        const currentLabel = options.find((o) => o.value === sortBy)?.label || "Sort";
+
+        return (
+            <div className="relative" ref={ref}>
+                <button
+                    type="button"
+                    onClick={() => setOpen((s) => !s)}
+                    className="w-full flex items-center justify-between px-2 py-1 rounded border text-xs bg-white"
+                >
+                    <span className="truncate">{currentLabel}</span>
+                    <svg className="w-3 h-3 ml-2 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                    </svg>
+                </button>
+
+                {open && (
+                    <ul className="absolute right-0 mt-1 w-full bg-white border rounded shadow-sm z-20">
+                        {options.map((o) => (
+                            <li
+                                key={o.value}
+                                className="px-2 py-2 text-sm hover:bg-slate-50 cursor-pointer"
+                                onClick={() => {
+                                    onChange(o.value);
+                                    setOpen(false);
+                                }}
+                            >
+                                {o.label}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        );
+    }
+
 
     // 过滤和排序逻辑
     const filtered = useMemo(() => {
@@ -112,20 +166,16 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                             placeholder="Search ticker or name"
                             className="px-2 py-1 rounded border text-xs w-36"
                         />
+                        {/* custom dropdown to avoid browser native option styling */}
                         <div className="relative w-32">
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="block w-full px-2 py-1 rounded border text-xs appearance-none bg-white pr-8"
-                            >
-                                <option value="Profit">Sort: Profit</option>
-                                <option value="Price">Sort: Price</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                                <svg className="w-3 h-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-                                </svg>
-                            </div>
+                            {/* Options list for the custom dropdown */}
+                            {/* keep these values in sync with previous select options */}
+                            {/* eslint-disable-next-line react-hooks/rules-of-hooks */}
+                            {null}
+                            <CustomSortDropdown
+                                sortBy={sortBy}
+                                onChange={(v: string) => setSortBy(v)}
+                            />
                         </div>
                     </div>
                 </div>
