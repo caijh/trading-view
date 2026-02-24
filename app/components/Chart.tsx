@@ -71,17 +71,19 @@ export default function Chart() {
                         <div className="p-4 border-b">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <div className="text-sm text-slate-500">Symbol</div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-sm text-slate-500">Symbol</div>
+                                        <button
+                                            className="text-slate-600 hover:text-slate-800 p-1 rounded"
+                                            onClick={openSymbolInput}
+                                            title="Search symbol"
+                                        >
+                                            <i className="fas fa-search"></i>
+                                        </button>
+                                    </div>
                                     <div className="text-lg font-medium">
                                         <div className="flex items-center gap-2">
                                             <span>{symbol.ticker} — {symbol.name}</span>
-                                            <button
-                                                className="text-slate-600 hover:text-slate-800 p-1 rounded"
-                                                onClick={openSymbolInput}
-                                                title="Search symbol"
-                                            >
-                                                <i className="fas fa-search"></i>
-                                            </button>
 
                                             {showSymbolInput && (
                                                 <div className="ml-2 flex items-center gap-2">
