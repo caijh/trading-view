@@ -113,7 +113,7 @@ export default function Chart() {
 
                     {/* Symbol search modal overlay */}
                     {showSymbolInput && (
-                        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-40">
+                        <div className="fixed inset-0 z-20 flex items-center justify-center bg-transparent backdrop-blur-sm">
                             <div className="bg-white p-4 rounded shadow-lg w-[320px]">
                                 <div className="mb-2 text-sm font-medium">Search Symbol</div>
                                 <div className="flex gap-2">
