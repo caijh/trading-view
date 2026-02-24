@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import KLineChart from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
@@ -20,12 +20,45 @@ export default function Chart() {
         setAnalysisData(data);
     };
 
+    const [showSymbolInput, setShowSymbolInput] = useState(false);
+    const [inputValue, setInputValue] = useState(symbol.ticker);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
     // 每次路径 code 变化时更新 symbol
     useEffect(() => {
         if (code) {
             setSymbol({ ticker: code, name: code });
         }
     }, [code]);
+
+    // focus the input when opened
+    useEffect(() => {
+        if (showSymbolInput && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [showSymbolInput]);
+
+    const openSymbolInput = () => {
+        setInputValue(symbol.ticker || "");
+        setShowSymbolInput(true);
+    };
+
+    const submitSymbol = () => {
+        const trimmed = inputValue.trim();
+        if (trimmed) {
+            setSymbol({ ticker: trimmed, name: trimmed });
+        }
+        setShowSymbolInput(false);
+    };
+
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            submitSymbol();
+        } else if (e.key === "Escape") {
+            setShowSymbolInput(false);
+        }
+    };
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-slate-50 text-slate-900">
@@ -40,7 +73,43 @@ export default function Chart() {
                                 <div>
                                     <div className="text-sm text-slate-500">Symbol</div>
                                     <div className="text-lg font-medium">
-                                        {symbol.ticker} — {symbol.name}
+                                        <div className="flex items-center gap-2">
+                                            <span>{symbol.ticker} — {symbol.name}</span>
+                                            <button
+                                                className="text-slate-600 hover:text-slate-800 p-1 rounded"
+                                                onClick={openSymbolInput}
+                                                title="Search symbol"
+                                            >
+                                                <i className="fas fa-search"></i>
+                                            </button>
+
+                                            {showSymbolInput && (
+                                                <div className="ml-2 flex items-center gap-2">
+                                                    <input
+                                                        ref={inputRef}
+                                                        value={inputValue}
+                                                        onChange={(e) => setInputValue(e.target.value)}
+                                                        onKeyDown={handleInputKeyDown}
+                                                        className="border rounded px-2 py-1 text-sm"
+                                                        placeholder="Enter symbol"
+                                                    />
+                                                    <button
+                                                        className="bg-blue-500 text-white px-2 py-1 rounded text-sm"
+                                                        onClick={submitSymbol}
+                                                        title="Apply"
+                                                    >
+                                                        OK
+                                                    </button>
+                                                    <button
+                                                        className="bg-gray-200 px-2 py-1 rounded text-sm"
+                                                        onClick={() => setShowSymbolInput(false)}
+                                                        title="Cancel"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
