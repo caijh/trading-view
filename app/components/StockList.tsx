@@ -112,14 +112,21 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                             placeholder="Search ticker or name"
                             className="px-2 py-1 rounded border text-xs w-36"
                         />
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="px-2 py-1 rounded border text-xs"
-                        >
-                            <option value="Profit">Sort: Profit</option>
-                            <option value="Price">Sort: Price</option>
-                        </select>
+                        <div className="relative w-32">
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="block w-full px-2 py-1 rounded border text-xs appearance-none bg-white pr-8"
+                            >
+                                <option value="Profit">Sort: Profit</option>
+                                <option value="Price">Sort: Price</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                                <svg className="w-3 h-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
