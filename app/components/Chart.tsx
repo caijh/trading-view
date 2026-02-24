@@ -73,44 +73,21 @@ export default function Chart() {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <div className="text-sm text-slate-500">Symbol</div>
-                                        <button
-                                            className="text-slate-600 hover:text-slate-800 p-1 rounded"
-                                            onClick={openSymbolInput}
-                                            title="Search symbol"
-                                        >
-                                            <i className="fas fa-search"></i>
-                                        </button>
+                                            <button
+                                                className="text-slate-600 hover:text-slate-800 p-1 rounded"
+                                                onClick={openSymbolInput}
+                                                title="Search symbol"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z" />
+                                                </svg>
+                                            </button>
                                     </div>
                                     <div className="text-lg font-medium">
                                         <div className="flex items-center gap-2">
                                             <span>{symbol.ticker} — {symbol.name}</span>
 
-                                            {showSymbolInput && (
-                                                <div className="ml-2 flex items-center gap-2">
-                                                    <input
-                                                        ref={inputRef}
-                                                        value={inputValue}
-                                                        onChange={(e) => setInputValue(e.target.value)}
-                                                        onKeyDown={handleInputKeyDown}
-                                                        className="border rounded px-2 py-1 text-sm"
-                                                        placeholder="Enter symbol"
-                                                    />
-                                                    <button
-                                                        className="bg-blue-500 text-white px-2 py-1 rounded text-sm"
-                                                        onClick={submitSymbol}
-                                                        title="Apply"
-                                                    >
-                                                        OK
-                                                    </button>
-                                                    <button
-                                                        className="bg-gray-200 px-2 py-1 rounded text-sm"
-                                                        onClick={() => setShowSymbolInput(false)}
-                                                        title="Cancel"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
-                                            )}
+                                            {/* popup input will be shown as a modal overlay instead of inline */}
                                         </div>
                                     </div>
                                 </div>
@@ -133,6 +110,34 @@ export default function Chart() {
                             <KLineChart symbol={symbol.ticker} onAnalysisDataAction={handleAnalysisData}/>
                         </div>
                     </section>
+
+                    {/* Symbol search modal overlay */}
+                    {showSymbolInput && (
+                        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-40">
+                            <div className="bg-white p-4 rounded shadow-lg w-[320px]">
+                                <div className="mb-2 text-sm font-medium">Search Symbol</div>
+                                <div className="flex gap-2">
+                                    <input
+                                        ref={inputRef}
+                                        value={inputValue}
+                                        onChange={(e) => setInputValue(e.target.value)}
+                                        onKeyDown={handleInputKeyDown}
+                                        className="flex-1 border rounded px-2 py-1 text-sm"
+                                        placeholder="Enter symbol, e.g. AAPL.NS"
+                                    />
+                                    <button
+                                        className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                                        onClick={submitSymbol}
+                                    >
+                                        OK
+                                    </button>
+                                </div>
+                                <div className="mt-2 text-right">
+                                    <button className="text-sm text-slate-600" onClick={() => setShowSymbolInput(false)}>Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* right: stock list */}
                     <aside className="col-span-3 h-full overflow-y-auto">
