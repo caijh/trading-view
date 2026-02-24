@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FaSyncAlt } from "react-icons/fa";
+import { FaSyncAlt, FaEye } from "react-icons/fa";
 import toast from "react-hot-toast";
 
 // 定义股票数据接口，以匹配 API 返回的结构
@@ -100,7 +100,10 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
             <div className="p-6 border-b">
                 <div className="flex items-center justify-between gap-2">
                     <div>
-                        <div className="text-lg font-medium">Watchlist</div>
+                        <div className="text-lg font-medium flex items-center gap-2">
+                            <FaEye className="text-xl text-slate-700" />
+                            <span className="sr-only">Watchlist</span>
+                        </div>
                     </div>
                     <div className="flex gap-2">
                         <input
