@@ -28,7 +28,7 @@ export default function Chart() {
     }, [code]);
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="min-h-[calc(100vh-64px)] bg-slate-50 text-slate-900">
             <div className="mx-auto p-4">
                 <header className="mb-4 flex items-center justify-between" />
 
