@@ -103,7 +103,7 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
             return () => document.removeEventListener("mousedown", handleClick);
         }, []);
 
-        const currentLabel = options.find((o) => o.value === sortBy)?.label || "Sort";
+        const currentLabel = options.find((o) => o.value === sortBy)?.label || "Sort: Profit";
 
         return (
             <div className="relative" ref={ref}>
