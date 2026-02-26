@@ -65,7 +65,7 @@ export default function Chart() {
             <div className="mx-auto p-4">
                 <header className="mb-4 flex items-center justify-between" />
 
-                <main className="grid grid-cols-12 gap-4 h-[calc(100vh-64px)]">
+                <main className="grid grid-cols-12 gap-2 h-[calc(100vh-64px)]">
                     {/* left: chart area */}
                     <section className="col-span-9 bg-white rounded-lg shadow-sm overflow-hidden">
                         <div className="p-4 border-b">
