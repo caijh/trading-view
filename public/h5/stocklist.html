@@ -228,7 +228,10 @@
         // Candlestick signal badge
         if(typeof info.candlestick_signal !== 'undefined'){
           const sig = info.candlestick_signal;
-          const badge = sig === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : sig === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : `<span class="badge-signal">${sig}</span>`;
+          let badge;
+          if(sig === 1) badge = '<span class="badge-signal badge-bull">Bull</span>';
+          else if(sig === -1) badge = '<span class="badge-signal badge-bear">Bear</span>';
+          else badge = '➖';
           html += renderKeyValue('Candlestick Signal', badge);
         }
 
@@ -242,7 +245,11 @@
 
         // Indicator/training signals
         if(typeof info.indicator_signal !== 'undefined'){
-          const val = info.indicator_signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : info.indicator_signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : info.indicator_signal;
+          const sig = info.indicator_signal;
+          let val;
+          if(sig === 1) val = '<span class="badge-signal badge-bull">Bull</span>';
+          else if(sig === -1) val = '<span class="badge-signal badge-bear">Bear</span>';
+          else val = '➖';
           html += renderKeyValue('Indicator Signal', val);
         }
         // Indicator patterns (primary + secondary)
@@ -253,7 +260,11 @@
           html += renderKeyValue('Indicator patterns', combined.join(', '));
         }
         if(typeof info.training_model_signal !== 'undefined'){
-          const val = info.training_model_signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : info.training_model_signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : info.training_model_signal;
+          const sig = info.training_model_signal;
+          let val;
+          if(sig === 1) val = '<span class="badge-signal badge-bull">Bull</span>';
+          else if(sig === -1) val = '<span class="badge-signal badge-bear">Bear</span>';
+          else val = '➖';
           html += renderKeyValue('AI Model Signal', val);
         }
         // AI patterns array
