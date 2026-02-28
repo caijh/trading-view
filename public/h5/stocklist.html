@@ -207,7 +207,7 @@
           let icon = '↔';
           if(info.trending === 'UP') icon='⬆';
           else if(info.trending === 'DOWN') icon='⬇';
-          html += renderKeyValue('Trending', `${icon} ${info.trending}`);
+          html += renderKeyValue('Trending', `${icon}`);
         }
         if(info.direction){
           let dirIcon='↔';
@@ -229,17 +229,17 @@
         if(typeof info.candlestick_signal !== 'undefined'){
           const sig = info.candlestick_signal;
           const badge = sig === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : sig === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : `<span class="badge-signal">${sig}</span>`;
-          html += renderKeyValue('Candlestick', badge);
+          html += renderKeyValue('Candlestick Signal', badge);
         }
 
         // Indicator/training signals
         if(typeof info.indicator_signal !== 'undefined'){
-          const val = info.indicator_signal === 1 ? '<span class="badge-signal badge-bull">+1</span>' : info.indicator_signal === -1 ? '<span class="badge-signal badge-bear">-1</span>' : info.indicator_signal;
-          html += renderKeyValue('Indicator', val);
+          const val = info.indicator_signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : info.indicator_signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : info.indicator_signal;
+          html += renderKeyValue('Indicator Signal', val);
         }
         if(typeof info.training_model_signal !== 'undefined'){
-          const val = info.training_model_signal === 1 ? '<span class="badge-signal badge-bull">+1</span>' : info.training_model_signal === -1 ? '<span class="badge-signal badge-bear">-1</span>' : info.training_model_signal;
-          html += renderKeyValue('Model', val);
+          const val = info.training_model_signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : info.training_model_signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : info.training_model_signal;
+          html += renderKeyValue('AI Model Signal', val);
         }
 
         // AI patterns array
