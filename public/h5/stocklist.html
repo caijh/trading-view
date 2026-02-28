@@ -204,15 +204,15 @@
         if(info.stock_type) html += renderKeyValue('Type', info.stock_type);
         if(info.stock_code) html += renderKeyValue('Code', info.stock_code);
         if(info.trending){
-          let icon = '↔';
-          if(info.trending === 'UP') icon='⬆';
-          else if(info.trending === 'DOWN') icon='⬇';
+          let icon = '➖'; // flat
+          if(info.trending === 'UP') icon='▲';
+          else if(info.trending === 'DOWN') icon='▼';
           html += renderKeyValue('Trending', `${icon}`);
         }
         if(info.direction){
-          let dirIcon='↔';
-          if(info.direction === 'UP') dirIcon='⬆';
-          else if(info.direction === 'DOWN') dirIcon='⬇';
+          let dirIcon='➖';
+          if(info.direction === 'UP') dirIcon='▲';
+          else if(info.direction === 'DOWN') dirIcon='▼';
           html += renderKeyValue('Direction', `${dirIcon}`);
         }
 
