@@ -213,7 +213,7 @@
           let dirIcon='↔';
           if(info.direction === 'UP') dirIcon='⬆';
           else if(info.direction === 'DOWN') dirIcon='⬇';
-          html += renderKeyValue('Direction', `${dirIcon} ${info.direction}`);
+          html += renderKeyValue('Direction', `${dirIcon}`);
         }
 
         // Support / Resistance / support_date
@@ -254,12 +254,6 @@
         if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){
           html += renderKeyValue('AI Model patterns', info.ai_patterns.join(', '));
         }
-
-        // Turning endpoints
-        if(info.turning_up_point_1) html += renderKeyValue('Turning up 1', info.turning_up_point_1);
-        if(info.turning_up_point_2) html += renderKeyValue('Turning up 2', info.turning_up_point_2);
-        if(info.turning_down_point_1) html += renderKeyValue('Turning down 1', info.turning_down_point_1);
-        if(info.turning_down_point_2) html += renderKeyValue('Turning down 2', info.turning_down_point_2);
 
         // Turning points list
         if(info.turning && Array.isArray(info.turning) && info.turning.length){
