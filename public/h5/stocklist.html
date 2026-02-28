@@ -267,6 +267,13 @@
 
         
 
+        // Indicator patterns (primary + secondary)
+        if((info.primary_patterns && info.primary_patterns.length) || (info.secondary_patterns && info.secondary_patterns.length)){
+          const prim = info.primary_patterns||[];
+          const sec = info.secondary_patterns||[];
+          const combined = [...prim,...sec];
+          html += renderKeyValue('Indicator patterns', combined.join(', '));
+        }
         // Strategy details
         if(info.strategy){
           const strat = info.strategy;
