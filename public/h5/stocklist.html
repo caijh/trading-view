@@ -196,9 +196,22 @@
         let html = '';
         html += `<div style="margin-bottom:6px;font-size:14px;color:#0f172a"><strong>${ticker}</strong></div>`;
 
-        // Support / Resistance
+        // Basic details
+        if(info.name) html += renderKeyValue('Name', info.name);
+        if(info.exchange) html += renderKeyValue('Exchange', info.exchange);
+        if(info.stock_type) html += renderKeyValue('Type', info.stock_type);
+        if(info.stock_code) html += renderKeyValue('Code', info.stock_code);
+        if(info.trending) html += renderKeyValue('Trending', info.trending);
+        if(info.direction) html += renderKeyValue('Direction', info.direction);
+
+        // Support / Resistance / support_date
         if(typeof info.support !== 'undefined') html += renderKeyValue('Support', `<span style="color:#059669;font-weight:700">${info.support}</span>`);
         if(typeof info.resistance !== 'undefined') html += renderKeyValue('Resistance', `<span style="color:#ef4444;font-weight:700">${info.resistance}</span>`);
+        if(info.support_date) html += renderKeyValue('Support date', info.support_date.split(' ')[0]);
+
+        // Price / volume
+        if(typeof info.price !== 'undefined') html += renderKeyValue('Price', info.price);
+        if(typeof info.volume !== 'undefined') html += renderKeyValue('Volume', info.volume);
 
         // Candlestick signal badge
         if(typeof info.candlestick_signal !== 'undefined'){
@@ -207,7 +220,22 @@
           html += renderKeyValue('Candlestick', badge);
         }
 
-        // Turning points
+        // Indicator/training signals
+        if(typeof info.indicator_signal !== 'undefined') html += renderKeyValue('Indicator signal', info.indicator_signal);
+        if(typeof info.training_model_signal !== 'undefined') html += renderKeyValue('Model signal', info.training_model_signal);
+
+        // AI patterns array
+        if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){
+          html += renderKeyValue('AI patterns', info.ai_patterns.join(', '));
+        }
+
+        // Turning endpoints
+        if(info.turning_up_point_1) html += renderKeyValue('Turning up 1', info.turning_up_point_1);
+        if(info.turning_up_point_2) html += renderKeyValue('Turning up 2', info.turning_up_point_2);
+        if(info.turning_down_point_1) html += renderKeyValue('Turning down 1', info.turning_down_point_1);
+        if(info.turning_down_point_2) html += renderKeyValue('Turning down 2', info.turning_down_point_2);
+
+        // Turning points list
         if(info.turning && Array.isArray(info.turning) && info.turning.length){
           const items = info.turning.map((t)=>{
             const time = (t.time||'').split(' ')[0];
@@ -225,9 +253,13 @@
           html += `<div class="modal-row"><div class="modal-label">Patterns</div><div class="modal-value"><div class="list-pre">${pats}</div></div></div>`;
         }
 
-        // Raw dump for everything else
-        const rest = {...info}; delete rest.support; delete rest.resistance; delete rest.turning; delete rest.candlestick_patterns; delete rest.candlestick_signal;
-        html += `<div style="margin-top:10px">${renderKeyValue('Raw', `<div class="list-pre">${JSON.stringify(rest,null,2)}</div>`)}</div>`;
+        // Strategy details
+        if(info.strategy){
+          const strat = info.strategy;
+          html += `<div class="modal-row"><div class="modal-label">Strategy</div><div class="modal-value"><div class="list-pre">`;
+          html += `name: ${strat.strategy_name}<br/>type: ${strat.strategy_type}<br/>entry price: ${strat.entry_price}<br/>tp: ${strat.take_profit}<br/>sl: ${strat.stop_loss}`;
+          html += `</div></div></div>`;
+        }
 
         if(modalBody) modalBody.innerHTML = html;
 
