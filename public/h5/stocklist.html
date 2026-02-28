@@ -67,7 +67,7 @@
   <div id="analysisModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title">Analysis</div>
+        <div id="modalTitle" class="modal-title">Analysis</div>
         <div class="modal-actions">
           <button id="modalCopy" class="btn-ghost" title="Copy JSON">Copy</button>
           <button id="modalClose" style="background:none;border:0;font-size:18px;cursor:pointer">✕</button>
@@ -194,7 +194,9 @@
         }
         const info = json.data;
         let html = '';
-        html += `<div style="margin-bottom:6px;font-size:14px;color:#0f172a"><strong>${ticker}</strong></div>`;
+        // set dynamic title
+        const titleEl = document.getElementById('modalTitle');
+        if(titleEl) titleEl.textContent = `Analysis ${ticker}`;
 
         // Basic details
         if(info.name) html += renderKeyValue('Name', info.name);
@@ -222,7 +224,7 @@
 
         // Indicator/training signals
         if(typeof info.indicator_signal !== 'undefined') html += renderKeyValue('Indicator signal', info.indicator_signal);
-        if(typeof info.training_model_signal !== 'undefined') html += renderKeyValue('Model signal', info.training_model_signal);
+        if(typeof info.training_model_signal !== 'undefined') html += renderKeyValue('Ai Model signal', info.training_model_signal);
 
         // AI patterns array
         if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){
