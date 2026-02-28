@@ -271,12 +271,13 @@
         if(info.strategy){
           const strat = info.strategy;
           html += `<div class="modal-row"><div class="modal-label">Strategy</div><div class="modal-value">`;
-          html += `<div><strong>${strat.strategy_name}</strong> (${strat.strategy_type})</div>`;
-          html += `<div>Entry: ${strat.entry_price} · TP: ${strat.take_profit} · SL: ${strat.stop_loss}</div>`;
+          html += `<div><strong>${strat.strategy_name}</strong></div>`;
+          html += `<div><strong>${strat.strategy_type}</strong></div>`;
           if(typeof strat.signal !== 'undefined'){
             const s = strat.signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : strat.signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : strat.signal;
             html += `<div>Signal: ${s}</div>`;
           }
+          html += `<div>Entry: ${strat.entry_price} · TP: ${strat.take_profit} · SL: ${strat.stop_loss}</div>`;
           html += `</div></div></div>`;
         }
 
