@@ -245,11 +245,17 @@
           const val = info.indicator_signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : info.indicator_signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : info.indicator_signal;
           html += renderKeyValue('Indicator Signal', val);
         }
+        // Indicator patterns (primary + secondary)
+        if((info.primary_patterns && info.primary_patterns.length) || (info.secondary_patterns && info.secondary_patterns.length)){
+          const prim = info.primary_patterns||[];
+          const sec = info.secondary_patterns||[];
+          const combined = [...prim,...sec];
+          html += renderKeyValue('Indicator patterns', combined.join(', '));
+        }
         if(typeof info.training_model_signal !== 'undefined'){
           const val = info.training_model_signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : info.training_model_signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : info.training_model_signal;
           html += renderKeyValue('AI Model Signal', val);
         }
-
         // AI patterns array
         if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){
           html += renderKeyValue('AI Model patterns', info.ai_patterns.join(', '));
@@ -267,13 +273,7 @@
 
         
 
-        // Indicator patterns (primary + secondary)
-        if((info.primary_patterns && info.primary_patterns.length) || (info.secondary_patterns && info.secondary_patterns.length)){
-          const prim = info.primary_patterns||[];
-          const sec = info.secondary_patterns||[];
-          const combined = [...prim,...sec];
-          html += renderKeyValue('Indicator patterns', combined.join(', '));
-        }
+        
         // Strategy details
         if(info.strategy){
           const strat = info.strategy;
