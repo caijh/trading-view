@@ -203,8 +203,18 @@
         if(info.exchange) html += renderKeyValue('Exchange', info.exchange);
         if(info.stock_type) html += renderKeyValue('Type', info.stock_type);
         if(info.stock_code) html += renderKeyValue('Code', info.stock_code);
-        if(info.trending) html += renderKeyValue('Trending', info.trending);
-        if(info.direction) html += renderKeyValue('Direction', info.direction);
+        if(info.trending){
+          let icon = '↔';
+          if(info.trending === 'UP') icon='⬆';
+          else if(info.trending === 'DOWN') icon='⬇';
+          html += renderKeyValue('Trending', `${icon} ${info.trending}`);
+        }
+        if(info.direction){
+          let dirIcon='↔';
+          if(info.direction === 'UP') dirIcon='⬆';
+          else if(info.direction === 'DOWN') dirIcon='⬇';
+          html += renderKeyValue('Direction', `${dirIcon} ${info.direction}`);
+        }
 
         // Support / Resistance / support_date
         if(typeof info.support !== 'undefined') html += renderKeyValue('Support', `<span style="color:#059669;font-weight:700">${info.support}</span>`);
@@ -223,8 +233,14 @@
         }
 
         // Indicator/training signals
-        if(typeof info.indicator_signal !== 'undefined') html += renderKeyValue('Indicator signal', info.indicator_signal);
-        if(typeof info.training_model_signal !== 'undefined') html += renderKeyValue('Ai Model signal', info.training_model_signal);
+        if(typeof info.indicator_signal !== 'undefined'){
+          const val = info.indicator_signal === 1 ? '<span class="badge-signal badge-bull">+1</span>' : info.indicator_signal === -1 ? '<span class="badge-signal badge-bear">-1</span>' : info.indicator_signal;
+          html += renderKeyValue('Indicator', val);
+        }
+        if(typeof info.training_model_signal !== 'undefined'){
+          const val = info.training_model_signal === 1 ? '<span class="badge-signal badge-bull">+1</span>' : info.training_model_signal === -1 ? '<span class="badge-signal badge-bear">-1</span>' : info.training_model_signal;
+          html += renderKeyValue('Model', val);
+        }
 
         // AI patterns array
         if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){
@@ -258,8 +274,13 @@
         // Strategy details
         if(info.strategy){
           const strat = info.strategy;
-          html += `<div class="modal-row"><div class="modal-label">Strategy</div><div class="modal-value"><div class="list-pre">`;
-          html += `name: ${strat.strategy_name}<br/>type: ${strat.strategy_type}<br/>entry price: ${strat.entry_price}<br/>tp: ${strat.take_profit}<br/>sl: ${strat.stop_loss}`;
+          html += `<div class="modal-row"><div class="modal-label">Strategy</div><div class="modal-value">`;
+          html += `<div><strong>${strat.strategy_name}</strong> (${strat.strategy_type})</div>`;
+          html += `<div>Entry: ${strat.entry_price} · TP: ${strat.take_profit} · SL: ${strat.stop_loss}</div>`;
+          if(typeof strat.signal !== 'undefined'){
+            const s = strat.signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : strat.signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : strat.signal;
+            html += `<div>Signal: ${s}</div>`;
+          }
           html += `</div></div></div>`;
         }
 
