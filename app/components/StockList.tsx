@@ -101,17 +101,15 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
 
     // 获取操作建议
     const getActionSuggestion = (strategyType: string, holding: boolean, signal: number) => {
-        if (strategyType !== 'Long') {
-            return null;
-        }
-
-        if (!holding) {
-            if (signal === 1) return 'Buy';
-            if (signal === 0) return 'Wait';
-            if (signal === -1) return 'Sold';
-        } else {
-            if (signal === 1 || signal === 0) return 'Hold';
-            if (signal === -1) return 'Sold';
+        if (strategyType === 'Long') {
+            if (!holding) {
+                if (signal === 1) return 'B'; // Buy
+                if (signal === 0) return 'N'; // No Position
+                if (signal === -1) return 'S'; // Sell
+            } else {
+                if (signal === 1 || signal === 0) return 'H';
+                if (signal === -1) return 'S';
+            }
         }
 
         return null;
@@ -121,12 +119,12 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
     const getActionSuggestionStyle = (suggestion: string | null) => {
         if (!suggestion) return '';
         switch (suggestion) {
-            case 'Buy':
-            case 'Hold':
+            case 'B':
+            case 'H':
                 return 'bg-green-100 text-green-800';
-            case 'Wait':
+            case 'N':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'Sold':
+            case 'S':
                 return 'bg-red-100 text-red-800';
             default:
                 return '';
