@@ -85,13 +85,13 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
 
     // 使用 useEffect 获取数据
     useEffect(() => {
-        fetchStocks().then(r => {});
+        fetchStocks().then(() => {});
     }, []);
 
     const reloadStocks = () => {
         setLoading(true);
         setError(null);
-        fetchStocks().then(r => {}); // 重新加载数据
+        fetchStocks().then(() => {}); // 重新加载数据
     };
 
     // 计算利润百分比
