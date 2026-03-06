@@ -13,6 +13,8 @@ interface StockData {
     stop_loss: string;
     strategy_name: string;
     holding: boolean;
+    strategy_type: string;
+    signal: number;
 }
 
 // 定义组件内部使用的股票数据结构
@@ -24,22 +26,20 @@ interface MappedStock {
     stop_loss: number;
     strategy_name: string;
     holding: boolean;
+    strategy_type: string;
+    signal: number;
 }
 
 export default function StockList({onSelectAction}: { onSelectAction: (stock: MappedStock) => void }) {
     const [query, setQuery] = useState("");
-    const [sortBy, setSortBy] = useState("change");
+    const [sortBy, setSortBy] = useState("Profit");
     const [stocks, setStocks] = useState<MappedStock[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchStocks = async () => {
         try {
-            const postData = {
-                // 这里放置您需要发送到服务器的数据
-                // 例如：page: 1, page_size: 100
-            };
-
+            const postData = {};
             const response = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=1000', {
                 method: 'POST', // 明确指定为 POST 方法
                 headers: {
@@ -47,11 +47,17 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 },
                 body: JSON.stringify(postData), // 将 JavaScript 对象转换为 JSON 字符串
             });
+            console.log(response)
             if (!response.ok) {
-                toast.error(`HTTP error! status: ${response.status}`);
-                return;
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
             const data = await response.json();
+
+            // 检查API响应结构是否正确
+            if (!data?.data?.items || !Array.isArray(data.data.items)) {
+                throw new Error("API响应格式不正确");
+            }
 
             // 将 API 数据映射为组件所需格式
             const mappedStocks: MappedStock[] = data.data.items.map((item: StockData) => ({
@@ -62,12 +68,16 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 stop_loss: parseFloat(item.stop_loss),
                 strategy_name: item.strategy_name,
                 holding: item.holding,
+                strategy_type: item.strategy_type,
+                signal: item.signal,
             }));
 
             setStocks(mappedStocks);
+            setError(null);
         } catch (e) {
             console.error("Failed to fetch stock data:", e);
-            setError("Failed to load stock data.");
+            setError("加载股票数据失败，请稍后重试");
+            toast.error("加载股票数据失败");
         } finally {
             setLoading(false);
         }
@@ -84,7 +94,46 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
         fetchStocks().then(r => {}); // 重新加载数据
     };
 
-    // Custom dropdown component for selecting sort option (rendered below)
+    // 计算利润百分比
+    const calculateProfitPercentage = (price: number, takeProfit: number) => {
+        return ((takeProfit - price) / price * 100).toFixed(2);
+    };
+
+    // 获取操作建议
+    const getActionSuggestion = (strategyType: string, holding: boolean, signal: number) => {
+        if (strategyType !== 'Long') {
+            return null;
+        }
+
+        if (!holding) {
+            if (signal === 1) return 'Buy';
+            if (signal === 0) return 'Wait';
+            if (signal === -1) return 'Sold';
+        } else {
+            if (signal === 1 || signal === 0) return 'Hold';
+            if (signal === -1) return 'Sold';
+        }
+
+        return null;
+    };
+
+    // 获取操作建议的样式
+    const getActionSuggestionStyle = (suggestion: string | null) => {
+        if (!suggestion) return '';
+        switch (suggestion) {
+            case 'Buy':
+            case 'Hold':
+                return 'bg-green-100 text-green-800';
+            case 'Wait':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'Sold':
+                return 'bg-red-100 text-red-800';
+            default:
+                return '';
+        }
+    };
+
+    // Custom dropdown component for selecting sort option
     function CustomSortDropdown({ sortBy, onChange }: { sortBy: string; onChange: (v: string) => void }) {
         const options = [
             { value: "Profit", label: "Sort: Profit" },
@@ -138,40 +187,44 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
         );
     }
 
-
     // 过滤和排序逻辑
     const filtered = useMemo(() => {
-        if (!stocks) return [];
+        if (!stocks || stocks.length === 0) return [];
 
         const q = query.trim().toLowerCase();
         return stocks
             .filter((s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
-            .sort((a, b) => (sortBy === "Price" ? b.price - a.price : ((b.take_profit - b.price) - (a.take_profit - a.price))));
+            .sort((a, b) => {
+                if (sortBy === "Price") {
+                    return b.price - a.price;
+                } else {
+                    // 按利润百分比排序
+                    const aProfitPct = (a.take_profit - a.price) / a.price;
+                    const bProfitPct = (b.take_profit - b.price) / b.price;
+                    return bProfitPct - aProfitPct;
+                }
+            });
     }, [query, sortBy, stocks]);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
             <div className="p-6 border-b">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-1">
                     <div>
-                        <div className="text-lg font-medium flex items-center gap-2">
+                        <div className="text-lg font-medium flex items-center gap-1">
                             <FaGlasses className="text-xl text-slate-700" />
                             <span className="sr-only">Watchlist</span>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search ticker or name"
+                            placeholder="搜索股票代码或名称"
                             className="px-2 py-1 rounded border text-xs w-36"
                         />
                         {/* custom dropdown to avoid browser native option styling */}
                         <div className="relative w-32">
-                            {/* Options list for the custom dropdown */}
-                            {/* keep these values in sync with previous select options */}
-                            {/* eslint-disable-next-line react-hooks/rules-of-hooks */}
-                            {null}
                             <CustomSortDropdown
                                 sortBy={sortBy}
                                 onChange={(v: string) => setSortBy(v)}
@@ -183,11 +236,33 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
 
             {/* 根据加载和错误状态显示不同的内容 */}
             {loading ? (
-                <div className="p-3 text-center text-sm text-slate-500">Loading...</div>
+                <div className="p-3 text-center text-sm text-slate-500 flex-1 flex items-center justify-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        加载中...
+                    </div>
+                </div>
             ) : error ? (
-                <div className="p-3 text-center text-sm text-red-500">{error}</div>
+                <div className="p-3 text-center text-sm text-red-500 flex-1 flex flex-col items-center justify-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {error}
+                    </div>
+                    <button
+                        onClick={reloadStocks}
+                        className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                    >
+                        <FaSyncAlt />
+                        重试
+                    </button>
+                </div>
             ) : filtered.length > 0 ? (
-                <ul className="divide-y">
+                <ul className="divide-y flex-1 overflow-y-auto">
                     {filtered.map((s) => (
                         <li key={s.ticker} className="p-3 hover:bg-slate-50 cursor-pointer" onClick={() => onSelectAction(s)}>
                             <div className="flex items-center justify-between">
@@ -196,28 +271,56 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                                         <span
                                             className={`w-2.5 h-2.5 rounded-full mr-2 ${s.holding ? 'bg-red-500' : 'bg-white border-2 border-gray-300'}`}
                                         />
-                                        <div className="font-medium">{s.ticker} <span className="text-sm text-slate-500">{s.name}</span></div>
+                                        <div className="font-medium flex items-center">
+                                            <span className="mr-2" style={{ minWidth: '80px' }}>
+                {s.ticker}
+            </span>
+                                            {s.strategy_type === 'Long' && (
+                                                <span className="ml-2 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded inline-block">
+                    Long
+                </span>
+                                            )}
+                                            {s.strategy_type === 'Short' && (
+                                                <span className="ml-2 px-1.5 py-0.5 text-xs bg-purple-100 text-purple-800 rounded inline-block">
+                    Short
+                </span>
+                                            )}
+                                            {(() => {
+                                                const suggestion = getActionSuggestion(s.strategy_type, s.holding, s.signal);
+                                                return suggestion ? (
+                                                    <span className={`ml-2 px-1.5 py-0.5 text-xs rounded ${getActionSuggestionStyle(suggestion)}`}>
+                        {suggestion}
+                    </span>
+                                                ) : null;
+                                            })()}
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-slate-400">Market
-                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name}</div>
+                                    <div className="text-xs text-slate-400 mt-1">
+                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name}
+                                    </div>
                                 </div>
                                 <div className="text-right space-y-1">
                                     {/* Entry 与价格同一行 */}
                                     <div className="flex items-center justify-end gap-1 text-sm">
                                         <span className="text-slate-500">Entry:</span>
                                         <span className="font-semibold text-slate-800">
-      {s.price.toFixed(2)}
-    </span>
+                                            {s.price.toFixed(2)}
+                                        </span>
+                                        {/* 利润百分比 */}
+                                        <div className={`text-sm font-medium ${(s.take_profit - s.price) / s.price >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {calculateProfitPercentage(s.price, s.take_profit)}%
+                                        </div>
                                     </div>
+
 
                                     {/* TP / SL */}
                                     <div className="flex justify-end gap-2 text-sm">
-    <span className="px-1.5 py-0.5 rounded bg-green-50 text-green-600">
-      TP {s.take_profit.toFixed(2)}
-    </span>
+                                        <span className="px-1.5 py-0.5 rounded bg-green-50 text-green-600">
+                                            {s.take_profit.toFixed(2)}
+                                        </span>
                                         <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-600">
-      SL {s.stop_loss.toFixed(2)}
-    </span>
+                                            {s.stop_loss.toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -225,18 +328,26 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                     ))}
                 </ul>
             ) : (
-                <div className="p-3 text-center text-sm text-slate-500">No stocks found.</div>
+                <div className="p-3 text-center text-sm text-slate-500 flex-1 flex items-center justify-center">
+                    未找到股票数据
+                </div>
             )}
 
-            <div className="p-3 text-center text-xs text-slate-400">· Click a row to load chart ·
-                <span className="mx-1"> </span>
+            <div className="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-4 border-t">
+                <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                    <span>持仓中</span>
+                </div>
+                <span>· 点击行加载图表 ·</span>
                 <button
                     title="Reload Stocks"
                     onClick={reloadStocks}
-                    className="text-blue-500 hover:text-blue-600"
+                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
                 >
-                    <FaSyncAlt /> {/* Font Awesome Sync icon */}
-                </button></div>
+                    <FaSyncAlt />
+                    <span>刷新</span>
+                </button>
+            </div>
         </div>
     );
 }
