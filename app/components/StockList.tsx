@@ -95,8 +95,23 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
     };
 
     // 计算利润百分比
-    const calculateProfitPercentage = (price: number, takeProfit: number) => {
-        return ((takeProfit - price) / price * 100).toFixed(2);
+    const calculateProfitPercentage = (price: number, takeProfit: number, strategyType: string) => {
+        if (strategyType === 'Long') {
+            return ((takeProfit - price) / price * 100).toFixed(2);
+        } else {
+            // Short: profit when price goes down
+            return ((price - takeProfit) / price * 100).toFixed(2);
+        }
+    };
+
+    // 计算亏损百分比
+    const calculateLossPercentage = (price: number, stopLoss: number, strategyType: string) => {
+        if (strategyType === 'Long') {
+            return ((stopLoss - price) / price * 100).toFixed(2);
+        } else {
+            // Short: loss when price goes up
+            return ((price - stopLoss) / price * 100).toFixed(2);
+        }
     };
 
     // 获取操作建议
@@ -196,9 +211,9 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 if (sortBy === "Price") {
                     return b.price - a.price;
                 } else {
-                    // 按利润百分比排序
-                    const aProfitPct = (a.take_profit - a.price) / a.price;
-                    const bProfitPct = (b.take_profit - b.price) / b.price;
+                    // 按利润百分比排序，考虑 strategy_type
+                    const aProfitPct = parseFloat(calculateProfitPercentage(a.price, a.take_profit, a.strategy_type));
+                    const bProfitPct = parseFloat(calculateProfitPercentage(b.price, b.take_profit, b.strategy_type));
                     return bProfitPct - aProfitPct;
                 }
             });
@@ -305,8 +320,12 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                                             {s.price.toFixed(2)}
                                         </span>
                                         {/* 利润百分比 */}
-                                        <div className={`text-sm font-medium ${(s.take_profit - s.price) / s.price >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {calculateProfitPercentage(s.price, s.take_profit)}%
+                                        <div className={`text-sm font-medium ${parseFloat(calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)}%
+                                        </div>
+                                        {/* 亏损百分比 */}
+                                        <div className={`text-sm font-medium ${parseFloat(calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)}%
                                         </div>
                                     </div>
 
