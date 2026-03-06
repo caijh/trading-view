@@ -86,6 +86,26 @@
 
     let stocks = [];
 
+    // 计算利润百分比
+    function calculateProfitPercentage(price, takeProfit, strategyType){
+      if(strategyType === 'Long'){
+        return ((takeProfit - price) / price * 100).toFixed(2);
+      } else {
+        // Short: profit when price goes down
+        return ((price - takeProfit) / price * 100).toFixed(2);
+      }
+    }
+
+    // 计算亏损百分比
+    function calculateLossPercentage(price, stopLoss, strategyType){
+      if(strategyType === 'Long'){
+        return ((stopLoss - price) / price * 100).toFixed(2);
+      } else {
+        // Short: loss when price goes up
+        return ((price - stopLoss) / price * 100).toFixed(2);
+      }
+    }
+
     async function fetchStocks(){
       statusEl.textContent = 'Loading...';
       statusEl.style.display = '';
@@ -103,7 +123,8 @@
           take_profit:parseFloat(item.take_profit||0),
           stop_loss:parseFloat(item.stop_loss||0),
           strategy_name:item.strategy_name||'',
-          holding:!!item.holding
+          holding:!!item.holding,
+          strategy_type:item.strategy_type||'Long'
         }));
         render();
       }catch(e){
@@ -116,7 +137,16 @@
       const q = (qEl.value||'').trim().toLowerCase();
       const sortBy = sortEl.value;
       let filtered = stocks.filter(s=>s.ticker.toLowerCase().includes(q)||s.name.toLowerCase().includes(q));
-      filtered.sort((a,b)=> sortBy==='Price' ? b.price - a.price : ((b.take_profit - b.price) - (a.take_profit - a.price)));
+      filtered.sort((a,b)=> {
+        if(sortBy === 'Price'){
+          return b.price - a.price;
+        } else {
+          // 按利润百分比排序，考虑 strategy_type
+          const aProfitPct = parseFloat(calculateProfitPercentage(a.price, a.take_profit, a.strategy_type));
+          const bProfitPct = parseFloat(calculateProfitPercentage(b.price, b.take_profit, b.strategy_type));
+          return bProfitPct - aProfitPct;
+        }
+      });
 
       listEl.innerHTML = '';
       if(filtered.length===0){
@@ -143,7 +173,15 @@
             </div>
           </div>
           <div style="text-align:right">
-            <div class="row-info"><span class="muted">Entry:</span> <span class="entry">${s.price.toFixed(2)}</span></div>
+            <div class="row-info">
+              <span class="muted">Entry:</span> <span class="entry">${s.price.toFixed(2)}</span>
+              <span style="color:${parseFloat(calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px">
+                ${calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)}%
+              </span>
+              <span style="color:${parseFloat(calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px">
+                ${calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)}%
+              </span>
+            </div>
             <div class="badges">
               <span class="badge tp">TP ${s.take_profit.toFixed(2)}</span>
               <span class="badge sl">SL ${s.stop_loss.toFixed(2)}</span>
@@ -282,9 +320,9 @@
           html += `<div class="modal-row"><div class="modal-label">Turning</div><div class="modal-value"><div class="list-pre">${items}</div></div></div>`;
         }
 
-        
 
-        
+
+
         // Strategy details
         if(info.strategy){
           const strat = info.strategy;
