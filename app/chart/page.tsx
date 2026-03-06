@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import Chart from "@/app/components/Chart";
 
 function LoadingProgress() {
