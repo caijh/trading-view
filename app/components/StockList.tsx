@@ -221,23 +221,20 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
 
     return (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="p-6 border-b">
-                <div className="flex items-center justify-between gap-1">
-                    <div>
-                        <div className="text-lg font-medium flex items-center gap-1">
-                            <FaGlasses className="text-xl text-slate-700" />
-                            <span className="sr-only">Watchlist</span>
-                        </div>
+            <div className="px-5 py-4 border-b border-slate-200">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <FaGlasses className="text-lg text-slate-700" />
+                        <h3 className="text-base font-semibold text-slate-800">Watchlist</h3>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-2">
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="搜索股票代码或名称"
-                            className="px-2 py-1 rounded border text-xs w-36"
+                            placeholder="搜索..."
+                            className="px-3 py-1.5 rounded-md border border-slate-300 text-sm w-40 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                         />
-                        {/* custom dropdown to avoid browser native option styling */}
-                        <div className="relative w-32">
+                        <div className="relative w-36">
                             <CustomSortDropdown
                                 sortBy={sortBy}
                                 onChange={(v: string) => setSortBy(v)}
