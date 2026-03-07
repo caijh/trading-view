@@ -172,20 +172,19 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 <button
                     type="button"
                     onClick={() => setOpen((s) => !s)}
-                    className="w-full flex items-center justify-between px-2 py-1 rounded border text-xs bg-white"
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-md border border-slate-300 text-sm bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 >
                     <span className="truncate">{currentLabel}</span>
                     <svg className="w-3 h-3 ml-2 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
                     </svg>
                 </button>
-
                 {open && (
-                    <ul className="absolute right-0 mt-1 w-full bg-white border rounded shadow-sm z-20">
+                    <ul className="absolute right-0 mt-1 w-full bg-white border rounded-md shadow-sm z-20">
                         {options.map((o) => (
                             <li
                                 key={o.value}
-                                className="px-2 py-2 text-sm hover:bg-slate-50 cursor-pointer"
+                                className="px-3 py-1.5 text-sm hover:bg-slate-50 cursor-pointer"
                                 onClick={() => {
                                     onChange(o.value);
                                     setOpen(false);
@@ -234,7 +233,7 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                             placeholder="搜索..."
                             className="px-3 py-1.5 rounded-md border border-slate-300 text-sm w-40 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                         />
-                        <div className="relative w-36">
+                        <div className="relative w-40">
                             <CustomSortDropdown
                                 sortBy={sortBy}
                                 onChange={(v: string) => setSortBy(v)}
