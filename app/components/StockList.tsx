@@ -126,7 +126,16 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 if (signal === -1) return 'S';
             }
         }
-
+        if (strategyType === 'Short') {
+            if (!holding) {
+                if (signal === -1) return 'S'; // Sell
+                if (signal === 0) return 'N'; // No Position
+                if (signal === 1) return 'B';
+            } else {
+                if (signal === -1 || signal === 0) return 'H';
+                if (signal === 1) return 'B';
+            }
+        }
         return null;
     };
 
