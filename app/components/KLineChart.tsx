@@ -94,7 +94,12 @@ const getTime = (symbol: string, date: string) : UTCTimestamp => {
 }
 
 // Main KLineChart component
-export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: string, onAnalysisDataAction: (data: any) => void }) {
+export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMove, onLatestOHLC }: {
+    symbol: string,
+    onAnalysisDataAction: (data: any) => void,
+    onCrosshairMove?: (data: { open: number; high: number; low: number; close: number } | null) => void,
+    onLatestOHLC?: (data: { open: number; high: number; low: number; close: number } | null) => void
+}) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const volumeContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,6 +116,22 @@ export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: s
 
     const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined); // Store EMA5 series
     const sma20SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
+
+    // Store kline data for crosshair lookup
+    const klineDataRef = useRef<OhlcData[]>([]);
+
+    // Store the onCrosshairMove callback in a ref to avoid dependency issues
+    const onCrosshairMoveRef = useRef(onCrosshairMove);
+    useEffect(() => {
+        onCrosshairMoveRef.current = onCrosshairMove;
+    }, [onCrosshairMove]);
+    
+    // Store the onLatestOHLC callback in a ref to avoid dependency issues
+    const onLatestOHLCRef = useRef(onLatestOHLC);
+    useEffect(() => {
+        onLatestOHLCRef.current = onLatestOHLC;
+    }, [onLatestOHLC]);
+
     let locale = 'ja-JP'
     if (symbol.endsWith('.NS')){
         locale = 'en-US'
@@ -133,6 +154,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: s
             },
             timeScale: {
                 visible: false,
+            },
+            crosshair: {
+                mode: 1, // Normal mode
+                vertLine: {
+                    visible: true,
+                    labelVisible: true,
+                },
+                horzLine: {
+                    visible: true,
+                    labelVisible: true,
+                },
             },
         });
         mainChart.applyOptions({
@@ -188,6 +220,28 @@ export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: s
 
         // Sync time scales
         syncCharts([mainChart, volumeChart]);
+
+        // Subscribe to crosshair move events - use crosshair move to track data
+        mainChart.subscribeCrosshairMove(param => {
+            if (!param.point || !param.time) {
+                onCrosshairMoveRef.current?.(null);
+                return;
+            }
+
+            // Find the kline data point at the crosshair time
+            const dataPoint = klineDataRef.current.find(d => d.time === param.time);
+
+            if (dataPoint) {
+                onCrosshairMoveRef.current?.({
+                    open: dataPoint.open,
+                    high: dataPoint.high,
+                    low: dataPoint.low,
+                    close: dataPoint.close,
+                });
+            } else {
+                onCrosshairMoveRef.current?.(null);
+            }
+        });
 
         // Handle resize
         const handleResize = () => {
@@ -281,7 +335,10 @@ export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: s
 
                 // Set data to the charts
                 candleSeriesRef.current?.setData(klineData);
-                volumeSeriesRef.current?.setData(volumeData)
+                volumeSeriesRef.current?.setData(volumeData);
+
+                // Store kline data for crosshair lookup
+                klineDataRef.current = klineData;
 
                 // Calculate EMA5 data
                 const eam5Data = calculateEMA(klineData, 5);
@@ -552,6 +609,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction }: { symbol: s
                         markers.push(...(Array.from(markerMap.values())));
                     }
                     candleSeriesMarkersRef.current?.setMarkers(markers);
+                }
+
+                // Send latest OHLC data to parent component
+                if (klineData.length > 0) {
+                    const latestData = klineData[klineData.length - 1];
+                    onLatestOHLCRef.current?.({
+                        open: latestData.open,
+                        high: latestData.high,
+                        low: latestData.low,
+                        close: latestData.close,
+                    });
                 }
             } catch (e) {
                 console.error("Failed to fetch K-line or analysis data:", e);
