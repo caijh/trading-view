@@ -32,6 +32,7 @@ interface MappedStock {
 
 export default function StockList({onSelectAction}: { onSelectAction: (stock: MappedStock) => void }) {
     const [query, setQuery] = useState("");
+    const [strategyFilter, setStrategyFilter] = useState<"All" | "Long" | "Short">("All");
     const [sortBy, setSortBy] = useState("Profit");
     const [stocks, setStocks] = useState<MappedStock[]>([]);
     const [loading, setLoading] = useState(true);
@@ -158,8 +159,8 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
     // Custom dropdown component for selecting sort option
     function CustomSortDropdown({ sortBy, onChange }: { sortBy: string; onChange: (v: string) => void }) {
         const options = [
-            { value: "Profit", label: "Sort: Profit" },
-            { value: "Price", label: "Sort: Price" },
+            { value: "Profit", label: "Profit" },
+            { value: "Price", label: "Price" },
         ];
         const [open, setOpen] = useState(false);
         const ref = useRef<HTMLDivElement | null>(null);
@@ -174,17 +175,17 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
             return () => document.removeEventListener("mousedown", handleClick);
         }, []);
 
-        const currentLabel = options.find((o) => o.value === sortBy)?.label || "Sort: Profit";
+        const currentLabel = options.find((o) => o.value === sortBy)?.label || "Profit";
 
         return (
             <div className="relative" ref={ref}>
                 <button
                     type="button"
                     onClick={() => setOpen((s) => !s)}
-                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-md border border-slate-300 text-sm bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full flex items-center justify-between px-2 py-1.5 rounded-md border border-slate-300 text-xs bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 >
                     <span className="truncate">{currentLabel}</span>
-                    <svg className="w-3 h-3 ml-2 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <svg className="w-3 h-3 ml-1 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
                     </svg>
                 </button>
@@ -193,7 +194,61 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                         {options.map((o) => (
                             <li
                                 key={o.value}
-                                className="px-3 py-1.5 text-sm hover:bg-slate-50 cursor-pointer"
+                                className="px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer"
+                                onClick={() => {
+                                    onChange(o.value);
+                                    setOpen(false);
+                                }}
+                            >
+                                {o.label}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        );
+    }
+
+    // Custom dropdown component for strategy type filter
+    function StrategyFilterDropdown({ filter, onChange }: { filter: "All" | "Long" | "Short"; onChange: (v: "All" | "Long" | "Short") => void }) {
+        const options = [
+            { value: "All" as const, label: "All" },
+            { value: "Long" as const, label: "Long" },
+            { value: "Short" as const, label: "Short" },
+        ];
+        const [open, setOpen] = useState(false);
+        const ref = useRef<HTMLDivElement | null>(null);
+
+        useEffect(() => {
+            function handleClick(e: MouseEvent) {
+                if (ref.current && !ref.current.contains(e.target as Node)) {
+                    setOpen(false);
+                }
+            }
+            document.addEventListener("mousedown", handleClick);
+            return () => document.removeEventListener("mousedown", handleClick);
+        }, []);
+
+        const currentLabel = options.find((o) => o.value === filter)?.label || "All";
+
+        return (
+            <div className="relative" ref={ref}>
+                <button
+                    type="button"
+                    onClick={() => setOpen((s) => !s)}
+                    className="w-full flex items-center justify-between px-2 py-1.5 rounded-md border border-slate-300 text-xs bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                >
+                    <span className="truncate">{currentLabel}</span>
+                    <svg className="w-3 h-3 ml-1 text-slate-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                    </svg>
+                </button>
+                {open && (
+                    <ul className="absolute right-0 mt-1 w-full bg-white border rounded-md shadow-sm z-20">
+                        {options.map((o) => (
+                            <li
+                                key={o.value}
+                                className="px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer"
                                 onClick={() => {
                                     onChange(o.value);
                                     setOpen(false);
@@ -214,7 +269,15 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
 
         const q = query.trim().toLowerCase();
         return stocks
-            .filter((s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+            .filter((s) => {
+                // 文本搜索过滤
+                const matchesSearch = s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
+                
+                // 策略类型过滤
+                const matchesStrategy = strategyFilter === "All" || s.strategy_type === strategyFilter;
+                
+                return matchesSearch && matchesStrategy;
+            })
             .sort((a, b) => {
                 if (sortBy === "Price") {
                     return b.price - a.price;
@@ -225,7 +288,7 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                     return bProfitPct - aProfitPct;
                 }
             });
-    }, [query, sortBy, stocks]);
+    }, [query, sortBy, strategyFilter, stocks]);
 
     return (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
@@ -235,13 +298,19 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                         <FaGlasses className="text-lg text-slate-700" />
                     </div>
                     <div className="flex items-center gap-2">
+                        <div className="relative w-24">
+                            <StrategyFilterDropdown
+                                filter={strategyFilter}
+                                onChange={(v: "All" | "Long" | "Short") => setStrategyFilter(v)}
+                            />
+                        </div>
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder="搜索..."
-                            className="px-3 py-1.5 rounded-md border border-slate-300 text-sm w-40 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                            className="px-2 py-1.5 rounded-md border border-slate-300 text-xs w-28 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                         />
-                        <div className="relative w-40">
+                        <div className="relative w-24">
                             <CustomSortDropdown
                                 sortBy={sortBy}
                                 onChange={(v: string) => setSortBy(v)}
