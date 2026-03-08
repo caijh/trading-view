@@ -94,11 +94,11 @@ const getTime = (symbol: string, date: string) : UTCTimestamp => {
 }
 
 // Main KLineChart component
-export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMove, onLatestOHLC }: {
+export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMoveAction, onLatestOHLCAction }: {
     symbol: string,
     onAnalysisDataAction: (data: any) => void,
-    onCrosshairMove?: (data: { open: number; high: number; low: number; close: number } | null) => void,
-    onLatestOHLC?: (data: { open: number; high: number; low: number; close: number } | null) => void
+    onCrosshairMoveAction?: (data: { open: number; high: number; low: number; close: number } | null) => void,
+    onLatestOHLCAction?: (data: { open: number; high: number; low: number; close: number } | null) => void
 }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const volumeContainerRef = useRef<HTMLDivElement | null>(null);
@@ -121,16 +121,16 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
     const klineDataRef = useRef<OhlcData[]>([]);
 
     // Store the onCrosshairMove callback in a ref to avoid dependency issues
-    const onCrosshairMoveRef = useRef(onCrosshairMove);
+    const onCrosshairMoveRef = useRef(onCrosshairMoveAction);
     useEffect(() => {
-        onCrosshairMoveRef.current = onCrosshairMove;
-    }, [onCrosshairMove]);
+        onCrosshairMoveRef.current = onCrosshairMoveAction;
+    }, [onCrosshairMoveAction]);
     
     // Store the onLatestOHLC callback in a ref to avoid dependency issues
-    const onLatestOHLCRef = useRef(onLatestOHLC);
+    const onLatestOHLCRef = useRef(onLatestOHLCAction);
     useEffect(() => {
-        onLatestOHLCRef.current = onLatestOHLC;
-    }, [onLatestOHLC]);
+        onLatestOHLCRef.current = onLatestOHLCAction;
+    }, [onLatestOHLCAction]);
 
     let locale = 'ja-JP'
     if (symbol.endsWith('.NS')){

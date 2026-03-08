@@ -135,8 +135,8 @@ export default function Chart() {
                             <KLineChart 
                                 symbol={symbol.ticker} 
                                 onAnalysisDataAction={handleAnalysisData} 
-                                onCrosshairMove={handleCrosshairMove}
-                                onLatestOHLC={handleLatestOHLC}
+                                onCrosshairMoveAction={handleCrosshairMove}
+                                onLatestOHLCAction={handleLatestOHLC}
                             />
                         </div>
                     </section>
