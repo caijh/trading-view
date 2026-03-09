@@ -8,11 +8,20 @@
     :root{--bg:#ffffff;--muted:#6b7280;--green:#10b981;--red:#ef4444;--card:#f8fafc}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4;background:#f3f4f6;margin:0;padding:24px}
     .card{background:var(--bg);border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden;margin:0 auto}
-    .card .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6edf3}
+  .card .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6edf3}
     .title{display:flex;align-items:center;gap:10px;font-weight:600}
     .controls{display:flex;gap:8px;align-items:center}
     input.search{padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:14px;width:180px}
     select.sort{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px}
+    select.strategy-filter{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px}
+    .dropdown-container{position:relative;display:inline-block}
+    .dropdown-btn{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:4px;min-width:90px}
+    .dropdown-btn:hover{border-color:#9ca3af}
+    .dropdown-menu{position:absolute;top:100%;left:0;margin-top:2px;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,0.1);z-index:100;display:none;min-width:90px}
+    .dropdown-menu.show{display:block}
+    .dropdown-item{padding:6px 10px;cursor:pointer;font-size:13px}
+    .dropdown-item:hover{background:#f3f4f6}
+    .dropdown-item.selected{background:#e5e7eb;font-weight:600}
     ul.list{list-style:none;margin:0;padding:0}
     li.item{display:flex;justify-content:space-between;gap:4px;padding:6px 10px;align-items:center;border-bottom:1px solid #f1f5f9;cursor:pointer}
     li.item:hover{background:#fbfdff}
@@ -50,6 +59,17 @@
       <div class="title">👁 Watchlist</div>
       <div class="controls">
         <label for="q"></label><input class="search" id="q" placeholder="Search ticker or name" />
+        <div class="dropdown-container">
+          <button id="strategyFilterBtn" class="dropdown-btn" type="button">
+            <span id="strategyFilterLabel">All</span>
+            <span>▼</span>
+          </button>
+          <div id="strategyFilterMenu" class="dropdown-menu">
+            <div class="dropdown-item selected" data-value="All">All</div>
+            <div class="dropdown-item" data-value="Long">Long</div>
+            <div class="dropdown-item" data-value="Short">Short</div>
+          </div>
+        </div>
         <label for="sort"></label><select id="sort" class="sort"><option value="Profit">Sort: Profit</option><option value="Price">Sort: Price</option></select>
         <button id="reload" class="reload">⟳ Reload</button>
       </div>
@@ -82,8 +102,12 @@
     const qEl = document.getElementById('q');
     const sortEl = document.getElementById('sort');
     const reloadBtn = document.getElementById('reload');
+    const strategyFilterBtn = document.getElementById('strategyFilterBtn');
+    const strategyFilterLabel = document.getElementById('strategyFilterLabel');
+    const strategyFilterMenu = document.getElementById('strategyFilterMenu');
 
     let stocks = [];
+    let strategyFilter = 'All';
 
     // 计算利润百分比
     function calculateProfitPercentage(price, takeProfit, strategyType){
@@ -135,7 +159,13 @@
     function render(){
       const q = (qEl.value||'').trim().toLowerCase();
       const sortBy = sortEl.value;
-      let filtered = stocks.filter(s=>s.ticker.toLowerCase().includes(q)||s.name.toLowerCase().includes(q));
+      let filtered = stocks.filter(s=>{
+        // 文本搜索过滤
+        const matchesSearch = s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
+        // 策略类型过滤
+        const matchesStrategy = strategyFilter === 'All' || s.strategy_type === strategyFilter;
+        return matchesSearch && matchesStrategy;
+      });
       filtered.sort((a,b)=> {
         if(sortBy === 'Price'){
           return b.price - a.price;
@@ -195,6 +225,44 @@
     qEl.addEventListener('input', ()=> render());
     sortEl.addEventListener('change', ()=> render());
     reloadBtn.addEventListener('click', ()=> fetchStocks());
+
+    // Strategy filter dropdown handling
+    strategyFilterBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      strategyFilterMenu.classList.toggle('show');
+    });
+
+    // Handle dropdown item clicks
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        const value = e.target.getAttribute('data-value');
+        if (value) {
+          strategyFilter = value;
+
+          // Update label
+          if (strategyFilterLabel) {
+            strategyFilterLabel.textContent = value;
+          }
+
+          // Update selected state
+          document.querySelectorAll('.dropdown-item').forEach(i => {
+            i.classList.remove('selected');
+          });
+          e.target.classList.add('selected');
+
+          // Close dropdown and re-render
+          strategyFilterMenu.classList.remove('show');
+          render();
+        }
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!strategyFilterMenu.contains(e.target) && !strategyFilterBtn.contains(e.target)) {
+        strategyFilterMenu.classList.remove('show');
+      }
+    });
 
     // Modal helpers
     const modal = document.getElementById('analysisModal');
