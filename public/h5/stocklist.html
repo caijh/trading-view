@@ -13,15 +13,6 @@
     .controls{display:flex;gap:8px;align-items:center}
     input.search{padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:14px;width:180px}
     select.sort{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px}
-    select.strategy-filter{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px}
-    .dropdown-container{position:relative;display:inline-block}
-    .dropdown-btn{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:4px;min-width:90px}
-    .dropdown-btn:hover{border-color:#9ca3af}
-    .dropdown-menu{position:absolute;top:100%;left:0;margin-top:2px;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 6px rgba(0,0,0,0.1);z-index:100;display:none;min-width:90px}
-    .dropdown-menu.show{display:block}
-    .dropdown-item{padding:6px 10px;cursor:pointer;font-size:13px}
-    .dropdown-item:hover{background:#f3f4f6}
-    .dropdown-item.selected{background:#e5e7eb;font-weight:600}
     ul.list{list-style:none;margin:0;padding:0}
     li.item{display:flex;justify-content:space-between;gap:4px;padding:6px 10px;align-items:center;border-bottom:1px solid #f1f5f9;cursor:pointer}
     li.item:hover{background:#fbfdff}
@@ -58,17 +49,7 @@
     <div class="header">
       <div class="title">👁 Watchlist</div>
       <div class="controls">
-        <div class="dropdown-container">
-          <button id="strategyFilterBtn" class="dropdown-btn" type="button">
-            <span id="strategyFilterLabel">All</span>
-            <span>▼</span>
-          </button>
-          <div id="strategyFilterMenu" class="dropdown-menu">
-            <div class="dropdown-item selected" data-value="All">All</div>
-            <div class="dropdown-item" data-value="Long">Long</div>
-            <div class="dropdown-item" data-value="Short">Short</div>
-          </div>
-        </div>
+        <label for="strategyFilter"></label><select id="strategyFilter" class="sort"><option value="All">All</option><option value="Long">Long</option><option value="Short">Short</option></select>
         <label for="q"></label><input class="search" id="q" placeholder="Search ticker or name" />
         <label for="sort"></label><select id="sort" class="sort"><option value="Profit">Sort: Profit</option><option value="Price">Sort: Price</option></select>
         <button id="reload" class="reload">⟳ Reload</button>
@@ -102,12 +83,9 @@
     const qEl = document.getElementById('q');
     const sortEl = document.getElementById('sort');
     const reloadBtn = document.getElementById('reload');
-    const strategyFilterBtn = document.getElementById('strategyFilterBtn');
-    const strategyFilterLabel = document.getElementById('strategyFilterLabel');
-    const strategyFilterMenu = document.getElementById('strategyFilterMenu');
+    const strategyFilterEl = document.getElementById('strategyFilter');
 
     let stocks = [];
-    let strategyFilter = 'All';
 
     // 计算利润百分比
     function calculateProfitPercentage(price, takeProfit, strategyType){
@@ -159,6 +137,7 @@
     function render(){
       const q = (qEl.value||'').trim().toLowerCase();
       const sortBy = sortEl.value;
+      const strategyFilter = strategyFilterEl ? strategyFilterEl.value : 'All';
       let filtered = stocks.filter(s=>{
         // 文本搜索过滤
         const matchesSearch = s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
