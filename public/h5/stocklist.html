@@ -203,45 +203,8 @@
 
     qEl.addEventListener('input', ()=> render());
     sortEl.addEventListener('change', ()=> render());
+    strategyFilterEl?.addEventListener('change', ()=> render());
     reloadBtn.addEventListener('click', ()=> fetchStocks());
-
-    // Strategy filter dropdown handling
-    strategyFilterBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      strategyFilterMenu.classList.toggle('show');
-    });
-
-    // Handle dropdown item clicks
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        const value = e.target.getAttribute('data-value');
-        if (value) {
-          strategyFilter = value;
-
-          // Update label
-          if (strategyFilterLabel) {
-            strategyFilterLabel.textContent = value;
-          }
-
-          // Update selected state
-          document.querySelectorAll('.dropdown-item').forEach(i => {
-            i.classList.remove('selected');
-          });
-          e.target.classList.add('selected');
-
-          // Close dropdown and re-render
-          strategyFilterMenu.classList.remove('show');
-          render();
-        }
-      });
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!strategyFilterMenu.contains(e.target) && !strategyFilterBtn.contains(e.target)) {
-        strategyFilterMenu.classList.remove('show');
-      }
-    });
 
     // Modal helpers
     const modal = document.getElementById('analysisModal');
