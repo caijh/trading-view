@@ -421,9 +421,9 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const idxLast = klineData.length - 1;
                             const last = klineData[idxLast];
 
-                            // 将 time 映射为索引，避免直接用 timestamp 算斜率
-                            const x1 = idx1;
-                            const x2 = idx2;
+                            // 使用时间戳（秒）而非索引来计算斜率，避免因时间间隔不均匀导致偏差
+                            const x1 = p1.time as number;
+                            const x2 = p2.time as number;
                             const y1 = p1.low;
                             const y2 = p2.low;
 
@@ -444,11 +444,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                             // --- 虚线延伸部分 ---
                             // 虚线从较晚的点（p2）开始延伸，沿着相同的斜率向前延伸到未来
-                            const idxExtended = idx2 + 50;
-                            const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
+                            // 计算平均时间间隔（秒）
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            // 延伸50个数据点的时间
+                            const timeExtended = ((x2 as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            // 使用时间戳计算延伸点价格
+                            const yExtended = slope * (x2 + 50 * avgTimeDiff) + intercept;
 
                             const dashedLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
@@ -478,9 +479,9 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const idxLast = klineData.length - 1;
                             const last = klineData[idxLast];
 
-                            // 将 time 映射为索引，计算线性方程
-                            const x1 = idx1;
-                            const x2 = idx2;
+                            // 使用时间戳（秒）而非索引来计算斜率，避免因时间间隔不均匀导致偏差
+                            const x1 = p1.time as number;
+                            const x2 = p2.time as number;
                             const y1 = p1.high;
                             const y2 = p2.high;
 
@@ -501,11 +502,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                             // --- 虚线延伸部分 ---
                             // 虚线从较晚的点（p2）开始延伸，沿着相同的斜率向前延伸到未来
-                            const idxExtended = idx2 + 50;
-                            const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
+                            // 计算平均时间间隔（秒）
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            // 延伸50个数据点的时间
+                            const timeExtended = ((x2 as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            // 使用时间戳计算延伸点价格
+                            const yExtended = slope * (x2 + 50 * avgTimeDiff) + intercept;
 
                             const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316",
