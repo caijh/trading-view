@@ -430,17 +430,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
                             
-                            // 扩展点：向前延伸到未来某个时间点（比如延伸 50 个数据点的距离）
-                            // 虚线从 p2 开始延伸，所以要基于 p2 的索引计算
-                            const idxExtended = idx2 + 50;
-                            const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
-                            const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
-
                             // --- 实线部分 ---
-
-
                             const upLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
                                 lineWidth: 2,
@@ -453,6 +443,13 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             trendLinesRef.current.push(upLine);
 
                             // --- 虚线延伸部分 ---
+                            // 虚线从较晚的点（p2）开始延伸，沿着相同的斜率向前延伸到未来
+                            const idxExtended = idx2 + 50;
+                            const yExtended = slope * idxExtended + intercept;
+                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
+                            const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
+                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+
                             const dashedLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
                                 lineWidth: 2,
@@ -490,17 +487,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
                             
-                            // 扩展点：向前延伸到未来某个时间点（比如延伸 50 个数据点的距离）
-                            // 虚线从 p2 开始延伸，所以要基于 p2 的索引计算
-                            const idxExtended = idx2 + 50;
-                            const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
-                            const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
-
                             // --- 实线部分 ---
-
-
                             const downLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316", // 橙色
                                 lineWidth: 2,
@@ -513,13 +500,20 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             trendLinesRef.current.push(downLine);
 
                             // --- 虚线延伸部分 ---
+                            // 虚线从较晚的点（p1）开始延伸，沿着相同的斜率向前延伸到未来
+                            const idxExtended = idx1 + 50;
+                            const yExtended = slope * idxExtended + intercept;
+                            // 计算扩展时间：从 p1 的时间开始，加上 50 个数据点的时间间隔
+                            const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
+                            const timeExtended = ((p1.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+
                             const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316",
                                 lineWidth: 2,
                                 lineStyle: 1, // 虚线
                             });
                             dashedDownLine.setData([
-                                {time: p2.time, value: p2.high},
+                                {time: p1.time, value: p1.high},
                                 {time: timeExtended, value: yExtended},
                             ]);
                             trendLinesRef.current.push(dashedDownLine);
