@@ -125,7 +125,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
     useEffect(() => {
         onCrosshairMoveRef.current = onCrosshairMoveAction;
     }, [onCrosshairMoveAction]);
-    
+
     // Store the onLatestOHLC callback in a ref to avoid dependency issues
     const onLatestOHLCRef = useRef(onLatestOHLCAction);
     useEffect(() => {
@@ -429,7 +429,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
-                            
+
                             // --- 实线部分 ---
                             const upLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
@@ -456,7 +456,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 1, // 虚线
                             });
                             dashedLine.setData([
-                                {time: p2.time, value: p2.low},
+                                {time: p1.time, value: p1.low},
                                 {time: timeExtended, value: yExtended},
                             ]);
                             trendLinesRef.current.push(dashedLine);
@@ -486,7 +486,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
-                            
+
                             // --- 实线部分 ---
                             const downLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316", // 橙色
