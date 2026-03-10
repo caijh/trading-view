@@ -431,11 +431,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const intercept = y1 - slope * x1;
                             
                             // 扩展点：向前延伸到未来某个时间点（比如延伸 50 个数据点的距离）
-                            const idxExtended = idxLast + 50;
+                            // 虚线从 p2 开始延伸，所以要基于 p2 的索引计算
+                            const idxExtended = idx2 + 50;
                             const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：最后一个时间点 + (50 * 平均时间间隔)
+                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((last.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
 
                             // --- 实线部分 ---
 
@@ -490,11 +491,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const intercept = y1 - slope * x1;
                             
                             // 扩展点：向前延伸到未来某个时间点（比如延伸 50 个数据点的距离）
-                            const idxExtended = idxLast + 50;
+                            // 虚线从 p2 开始延伸，所以要基于 p2 的索引计算
+                            const idxExtended = idx2 + 50;
                             const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：最后一个时间点 + (50 * 平均时间间隔)
+                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((last.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
 
                             // --- 实线部分 ---
 
