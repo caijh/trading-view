@@ -429,9 +429,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
-                            const yLast = slope * idxLast + intercept;
+                            
+                            // 扩展点：向前延伸到未来某个时间点（比如延伸 50 个数据点的距离）
+                            const idxExtended = idxLast + 50;
+                            const yExtended = slope * idxExtended + intercept;
+                            // 计算扩展时间：最后一个时间点 + (50 * 平均时间间隔)
+                            const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
+                            const timeExtended = ((last.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
 
                             // --- 实线部分 ---
+
+
                             const upLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
                                 lineWidth: 2,
@@ -451,7 +459,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             });
                             dashedLine.setData([
                                 {time: p2.time, value: p2.low},
-                                {time: last.time, value: yLast},
+                                {time: timeExtended, value: yExtended},
                             ]);
                             trendLinesRef.current.push(dashedLine);
                         }
@@ -480,9 +488,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
-                            const yLast = slope * idxLast + intercept;
+                            
+                            // 扩展点：向前延伸到未来某个时间点（比如延伸 50 个数据点的距离）
+                            const idxExtended = idxLast + 50;
+                            const yExtended = slope * idxExtended + intercept;
+                            // 计算扩展时间：最后一个时间点 + (50 * 平均时间间隔)
+                            const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
+                            const timeExtended = ((last.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
 
                             // --- 实线部分 ---
+
+
                             const downLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316", // 橙色
                                 lineWidth: 2,
@@ -502,7 +518,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             });
                             dashedDownLine.setData([
                                 {time: p2.time, value: p2.high},
-                                {time: last.time, value: yLast},
+                                {time: timeExtended, value: yExtended},
                             ]);
                             trendLinesRef.current.push(dashedDownLine);
                         }
