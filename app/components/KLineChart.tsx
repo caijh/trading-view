@@ -441,7 +441,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const x1 = t1;
                             const x2 = t2;
                             const y1 = v1;
-                            const slope = (v2 - y1) / (x2 - x1);
+                            const y2 = v2;
+                            const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
 
                             // --- 实线部分 ---
@@ -513,7 +514,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const x1 = t1;
                             const x2 = t2;
                             const y1 = v1;
-                            const slope = (v2 - y1) / (x2 - x1);
+                            const y2 = v2;
+                            const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
 
                             // --- 实线部分 ---
