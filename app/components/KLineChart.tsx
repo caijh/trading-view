@@ -456,7 +456,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 1, // 虚线
                             });
                             dashedLine.setData([
-                                {time: p1.time, value: p1.low},
+                                {time: p2.time, value: p2.low},
                                 {time: timeExtended, value: yExtended},
                             ]);
                             trendLinesRef.current.push(dashedLine);
@@ -500,12 +500,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             trendLinesRef.current.push(downLine);
 
                             // --- 虚线延伸部分 ---
-                            // 虚线从较晚的点（p1）开始延伸，沿着相同的斜率向前延伸到未来
-                            const idxExtended = idx1 + 50;
+                            // 虚线从较晚的点（p2）开始延伸，沿着相同的斜率向前延伸到未来
+                            const idxExtended = idx2 + 50;
                             const yExtended = slope * idxExtended + intercept;
-                            // 计算扩展时间：从 p1 的时间开始，加上 50 个数据点的时间间隔
+                            // 计算扩展时间：从 p2 的时间开始，加上 50 个数据点的时间间隔
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            const timeExtended = ((p1.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
+                            const timeExtended = ((p2.time as number) + 50 * avgTimeDiff) as UTCTimestamp;
 
                             const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316",
@@ -513,7 +513,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 1, // 虚线
                             });
                             dashedDownLine.setData([
-                                {time: p1.time, value: p1.high},
+                                {time: p2.time, value: p2.high},
                                 {time: timeExtended, value: yExtended},
                             ]);
                             trendLinesRef.current.push(dashedDownLine);
