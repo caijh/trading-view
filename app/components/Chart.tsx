@@ -10,7 +10,7 @@ export default function Chart() {
     const code = searchParams.get("code");
 
     const [symbol, setSymbol] = useState<{ ticker: string; name: string }>({
-        ticker: code || "AAPL.NS",
+        ticker: code || "SPX.NS",
         name: "",
     });
 
@@ -23,15 +23,15 @@ export default function Chart() {
     // State for OHLC data when hovering over chart
     const [ohlcData, setOhlcData] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
     const [latestOHLC, setLatestOHLC] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
-    
+
     const handleCrosshairMove = (data: { open: number; high: number; low: number; close: number } | null) => {
         setOhlcData(data);
     };
-    
+
     const handleLatestOHLC = (data: { open: number; high: number; low: number; close: number } | null) => {
         setLatestOHLC(data);
     };
-    
+
     // Use crosshair data if available, otherwise use latest OHLC
     const displayOHLC = ohlcData || latestOHLC;
 
@@ -101,7 +101,7 @@ export default function Chart() {
                                     <div className="text-lg font-medium">
                                         <div className="flex items-center gap-2">
                                             <span>{symbol.ticker} — {symbol.name}</span>
-                                            
+
                                             {/* OHLC Display - positioned next to symbol name */}
                                             {displayOHLC && (
                                                 <span className="text-sm text-slate-600 ml-4">
@@ -132,9 +132,9 @@ export default function Chart() {
                         </div>
 
                         <div className="p-4">
-                            <KLineChart 
-                                symbol={symbol.ticker} 
-                                onAnalysisDataAction={handleAnalysisData} 
+                            <KLineChart
+                                symbol={symbol.ticker}
+                                onAnalysisDataAction={handleAnalysisData}
                                 onCrosshairMoveAction={handleCrosshairMove}
                                 onLatestOHLCAction={handleLatestOHLC}
                             />
