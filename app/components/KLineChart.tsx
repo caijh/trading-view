@@ -419,31 +419,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const idxLast = klineData.length - 1;
                             const last = klineData[idxLast];
 
-                            // 使用时间戳（秒）而非索引来计算斜率，避免因时间间隔不均匀导致偏差
-                            // 确保 x1 < x2（时间从小到大），同时确定哪个点是较早的，哪个是较晚的
-                            let t1 = p1.time as number;
-                            let t2 = p2.time as number;
-                            let v1 = p1.low;
-                            let v2 = p2.low;
+                            // 确定哪个点是较早的，哪个是较晚的
+                            const earlyPoint = (p1.time as number) < (p2.time as number) ? p1 : p2;
+                            const latePoint = (p1.time as number) < (p2.time as number) ? p2 : p1;
 
-                            // 记录原始点以便用于绘制实线
-                            let point1 = { time: p1.time as UTCTimestamp, value: p1.low };
-                            let point2 = { time: p2.time as UTCTimestamp, value: p2.low };
-
-                            // 确保 t1 < t2（t1较早，t2较晚）
-                            if (t1 > t2) {
-                                [t1, t2] = [t2, t1];
-                                [v1, v2] = [v2, v1];
-                                // 同时也要互换绘制点，确保实线从早到晚绘制
-                                [point1, point2] = [point2, point1];
-                            }
-
-                            const x1 = t1;
-                            const x2 = t2;
-                            const y1 = v1;
-                            const y2 = v2;
-                            const slope = (y2 - y1) / (x2 - x1);
-                            const intercept = y1 - slope * x1;
+                            // 计算斜率和截距（基于时间戳）
+                            const t1 = earlyPoint.time as number;
+                            const t2 = latePoint.time as number;
+                            const y1 = earlyPoint.low;
+                            const y2 = latePoint.low;
+                            const slope = (y2 - y1) / (t2 - t1);
+                            const intercept = y1 - slope * t1;
 
                             // --- 实线部分 ---
                             const upLine = mainChartRef.current.addSeries(LineSeries, {
@@ -452,19 +438,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 0, // 实线
                             });
                             upLine.setData([
-                                point1,  // 较早的点
-                                point2,  // 较晚的点
+                                { time: earlyPoint.time, value: earlyPoint.low },
+                                { time: latePoint.time, value: latePoint.low },
                             ]);
                             trendLinesRef.current.push(upLine);
 
                             // --- 虚线延伸部分 ---
-                            // 虚线从较晚的点（x2）开始延伸，沿着相同的斜率向前延伸到未来
                             // 计算平均时间间隔（秒）
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            // 延伸50个数据点的时间
-                            const timeExtended = (x2 + 50 * avgTimeDiff) as UTCTimestamp;
-                            // 使用时间戳计算延伸点价格
-                            const yExtended = slope * (x2 + 50 * avgTimeDiff) + intercept;
+                            // 延伸50个数据点
+                            const timeExtended = (t2 + 50 * avgTimeDiff) as UTCTimestamp;
+                            const yExtended = slope * (t2 + 50 * avgTimeDiff) + intercept;
 
                             const dashedLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
@@ -472,8 +456,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 1, // 虚线
                             });
                             dashedLine.setData([
-                                point2,  // 从较晚的点开始
-                                {time: timeExtended, value: yExtended},
+                                { time: latePoint.time, value: latePoint.low },
+                                { time: timeExtended, value: yExtended },
                             ]);
                             trendLinesRef.current.push(dashedLine);
                         }
@@ -492,31 +476,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const idxLast = klineData.length - 1;
                             const last = klineData[idxLast];
 
-                            // 使用时间戳（秒）而非索引来计算斜率，避免因时间间隔不均匀导致偏差
-                            // 确保 x1 < x2（时间从小到大），同时确定哪个点是较早的，哪个是较晚的
-                            let t1 = p1.time as number;
-                            let t2 = p2.time as number;
-                            let v1 = p1.high;
-                            let v2 = p2.high;
+                            // 确定哪个点是较早的，哪个是较晚的
+                            const earlyPoint = (p1.time as number) < (p2.time as number) ? p1 : p2;
+                            const latePoint = (p1.time as number) < (p2.time as number) ? p2 : p1;
 
-                            // 记录原始点以便用于绘制实线
-                            let point1 = { time: p1.time as UTCTimestamp, value: p1.high };
-                            let point2 = { time: p2.time as UTCTimestamp, value: p2.high };
-
-                            // 确保 t1 < t2（t1较早，t2较晚）
-                            if (t1 > t2) {
-                                [t1, t2] = [t2, t1];
-                                [v1, v2] = [v2, v1];
-                                // 同时也要互换绘制点，确保实线从早到晚绘制
-                                [point1, point2] = [point2, point1];
-                            }
-
-                            const x1 = t1;
-                            const x2 = t2;
-                            const y1 = v1;
-                            const y2 = v2;
-                            const slope = (y2 - y1) / (x2 - x1);
-                            const intercept = y1 - slope * x1;
+                            // 计算斜率和截距（基于时间戳）
+                            const t1 = earlyPoint.time as number;
+                            const t2 = latePoint.time as number;
+                            const y1 = earlyPoint.high;
+                            const y2 = latePoint.high;
+                            const slope = (y2 - y1) / (t2 - t1);
+                            const intercept = y1 - slope * t1;
 
                             // --- 实线部分 ---
                             const downLine = mainChartRef.current.addSeries(LineSeries, {
@@ -525,19 +495,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 0, // 实线
                             });
                             downLine.setData([
-                                point1,  // 较早的点
-                                point2,  // 较晚的点
+                                { time: earlyPoint.time, value: earlyPoint.high },
+                                { time: latePoint.time, value: latePoint.high },
                             ]);
                             trendLinesRef.current.push(downLine);
 
                             // --- 虚线延伸部分 ---
-                            // 虚线从较晚的点（x2）开始延伸，沿着相同的斜率向前延伸到未来
                             // 计算平均时间间隔（秒）
                             const avgTimeDiff = (last.time as number) - (klineData[klineData.length - 2].time as number);
-                            // 延伸50个数据点的时间
-                            const timeExtended = (x2 + 50 * avgTimeDiff) as UTCTimestamp;
-                            // 使用时间戳计算延伸点价格
-                            const yExtended = slope * (x2 + 50 * avgTimeDiff) + intercept;
+                            // 延伸50个数据点
+                            const timeExtended = (t2 + 50 * avgTimeDiff) as UTCTimestamp;
+                            const yExtended = slope * (t2 + 50 * avgTimeDiff) + intercept;
 
                             const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316",
@@ -545,8 +513,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 lineStyle: 1, // 虚线
                             });
                             dashedDownLine.setData([
-                                point2,  // 从较晚的点开始
-                                {time: timeExtended, value: yExtended},
+                                { time: latePoint.time, value: latePoint.high },
+                                { time: timeExtended, value: yExtended },
                             ]);
                             trendLinesRef.current.push(dashedDownLine);
                         }
