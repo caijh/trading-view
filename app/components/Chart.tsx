@@ -179,6 +179,14 @@ export default function Chart() {
                     <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10">
                         <div className="space-y-2 text-left">
                             <div className="flex justify-between">
+                                <div><strong>Trending:</strong></div>
+                                <div>{analysisData.trending}</div>
+                            </div>
+                            <div className="flex justify-between">
+                                <div><strong>Direction:</strong></div>
+                                <div>{analysisData.direction}</div>
+                            </div>
+                            <div className="flex justify-between">
                                 <div><strong>Support:</strong></div>
                                 <div>{analysisData.support}</div>
                             </div>
