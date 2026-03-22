@@ -177,11 +177,11 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
         // Candlestick Series
         candleSeriesRef.current = mainChart.addSeries(CandlestickSeries, {
-            upColor: "#ef4444",
-            downColor: "#16a34a",
+            upColor: "#16a34a",
+            downColor: "#ef4444",
             borderVisible: false,
-            wickUpColor: "#ef4444",
-            wickDownColor: "#16a34a",
+            wickUpColor: "#16a34a",
+            wickDownColor: "#ef4444",
         });
         candleSeriesMarkersRef.current = createSeriesMarkers(candleSeriesRef.current, [])
 
