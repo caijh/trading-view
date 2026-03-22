@@ -20,6 +20,29 @@ export default function Chart() {
         setAnalysisData(data);
     };
 
+    // Helper function to determine arrow icon and color based on trend/direction value
+    const renderTrendIcon = (value: string) => {
+        const lowerValue = value?.toLowerCase() || "";
+        const isUp = ["up", "bullish", "increasing", "positive", "rise", "上涨"].some(v => lowerValue.includes(v));
+        const isDown = ["down", "bearish", "decreasing", "negative", "fall", "下跌"].some(v => lowerValue.includes(v));
+        
+        if (isUp) {
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+            );
+        }
+        if (isDown) {
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+            );
+        }
+        return <span className="text-slate-500">{value}</span>;
+    };
+
     // State for OHLC data when hovering over chart
     const [ohlcData, setOhlcData] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
     const [latestOHLC, setLatestOHLC] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
@@ -178,13 +201,17 @@ export default function Chart() {
                 {showModal && analysisData && (
                     <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10">
                         <div className="space-y-2 text-left">
-                            <div className="flex justify-between">
+                            <div className="flex justify-between items-center">
                                 <div><strong>Trending:</strong></div>
-                                <div>{analysisData.trending}</div>
+                                <div className="flex items-center gap-1">
+                                    {renderTrendIcon(analysisData.trending)}
+                                </div>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex justify-between items-center">
                                 <div><strong>Direction:</strong></div>
-                                <div>{analysisData.direction}</div>
+                                <div className="flex items-center gap-1">
+                                    {renderTrendIcon(analysisData.direction)}
+                                </div>
                             </div>
                             <div className="flex justify-between">
                                 <div><strong>Support:</strong></div>
