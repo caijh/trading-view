@@ -22,25 +22,52 @@ export default function Chart() {
 
     // Helper function to determine arrow icon and color based on trend/direction value
     const renderTrendIcon = (value: string) => {
-        const lowerValue = value?.toLowerCase() || "";
-        const isUp = ["up", "bullish", "increasing", "positive", "rise", "上涨"].some(v => lowerValue.includes(v));
-        const isDown = ["down", "bearish", "decreasing", "negative", "fall", "下跌"].some(v => lowerValue.includes(v));
+        if (!value) return null;
         
-        if (isUp) {
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-            );
+        switch (value.toUpperCase()) {
+            case 'UP':
+                return (
+                    <div className="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="5 3 19 12 12 12 12 21 5 3" />
+                        </svg>
+                        <span className="text-emerald-600 font-semibold text-sm">UP</span>
+                    </div>
+                );
+            case 'DOWN':
+                return (
+                    <div className="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 5 19 12 12 12 12 21 5 12 12 12 12 5" />
+                        </svg>
+                        <span className="text-rose-600 font-semibold text-sm">DOWN</span>
+                    </div>
+                );
+            case 'SIDE':
+                return (
+                    <div className="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="10 7 5 12 10 17" />
+                            <polyline points="14 7 19 12 14 17" />
+                        </svg>
+                        <span className="text-slate-500 font-semibold text-sm">SIDE</span>
+                    </div>
+                );
+            case 'UNKNOWN':
+                return (
+                    <div className="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <span className="text-amber-500 font-semibold text-sm">UNKNOWN</span>
+                    </div>
+                );
+            default:
+                return <span className="text-slate-500">{value}</span>;
         }
-        if (isDown) {
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-            );
-        }
-        return <span className="text-slate-500">{value}</span>;
     };
 
     // State for OHLC data when hovering over chart
