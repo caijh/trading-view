@@ -272,10 +272,10 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
             .filter((s) => {
                 // 文本搜索过滤
                 const matchesSearch = s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
-                
+
                 // 策略类型过滤
                 const matchesStrategy = strategyFilter === "All" || s.strategy_type === strategyFilter;
-                
+
                 return matchesSearch && matchesStrategy;
             })
             .sort((a, b) => {
@@ -382,7 +382,7 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                                         </div>
                                     </div>
                                     <div className="text-xs text-slate-400 mt-1">
-                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name}
+                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name} ${s.name}
                                     </div>
                                 </div>
                                 <div className="text-right space-y-1">
