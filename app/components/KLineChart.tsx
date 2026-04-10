@@ -296,7 +296,10 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 if (!res.ok) return;
                 const json = await res.json();
                 if (json.code === 0 && json.data) {
-                    applyRealtimePrice(json.data);
+                    let open = parseFloat(json.data.open)
+                    if (open > 0) {
+                        applyRealtimePrice(json.data);
+                    }
                 }
             } catch {
                 // 网络抖动静默处理，下次 interval 继续
