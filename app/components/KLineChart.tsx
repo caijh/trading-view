@@ -255,18 +255,14 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         return () => {
             window.removeEventListener("resize", handleResize);
 
-            // optional: remove any trend lines we created (if chart still exists)
             try {
-                // chart.removeSeries is the proper API to remove a series if needed
                 trendLinesRef.current.forEach(ts => {
                     try {
                         mainChart.removeSeries(ts);
-                    } catch { /* ignore */
-                    }
+                    } catch { /* ignore */ }
                 });
                 trendLinesRef.current = [];
-            } catch {
-            }
+            } catch { }
 
             mainChart.remove();
             volumeChart.remove();
@@ -279,11 +275,35 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
     useEffect(() => {
         if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
 
+        // ✅ 每次 symbol 变化创建新 AbortController
+        // cleanup 时调用 abort()，取消所有尚未完成的请求，彻底避免竞态
+        const controller = new AbortController();
+        const { signal } = controller;
+
+        // ✅ 抽离清图逻辑，symbol 切换后立即同步执行
+        // 防止旧股票图线在新请求返回前短暂残留，或旧请求慢返回后污染新图
+        const clearOverlays = () => {
+            try {
+                trendLinesRef.current.forEach(ts => {
+                    try { mainChartRef.current?.removeSeries(ts); } catch { /* ignore */ }
+                });
+                trendLinesRef.current = [];
+
+                priceLinesRef.current.forEach((pl: any) => {
+                    try { candleSeriesRef.current?.removePriceLine?.(pl); } catch { /* ignore */ }
+                });
+                priceLinesRef.current = [];
+
+                candleSeriesMarkersRef.current?.setMarkers([]);
+            } catch { /* ignore */ }
+        };
+
         const fetchData = async () => {
             try {
                 // Fetch K线数据
                 const API_URL = `/api/trading-data/stock/price/daily?code=${symbol}`;
-                const response = await fetch(API_URL);
+                // ✅ 传入 signal：symbol 切换触发 cleanup → abort() → 此 fetch 立即抛出 AbortError
+                const response = await fetch(API_URL, { signal });
                 if (!response.ok) {
                     toast.error(`HTTP error! status: ${response.status}`);
                     return;
@@ -310,29 +330,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     color: parseFloat(d.close) >= parseFloat(d.open) ? "#16a34a" : "#ef4444",
                 }));
 
-                // Clear any previous trend lines & price lines before drawing new ones
-                try {
-                    // remove previously added line series
-                    trendLinesRef.current.forEach(ts => {
-                        try {
-                            mainChartRef.current?.removeSeries(ts);
-                        } catch { /* ignore */
-                        }
-                    });
-                    trendLinesRef.current = [];
-
-                    // remove price lines created on candle series
-                    // NOTE: series API has removePriceLine in many versions; to be safe try-catch
-                    priceLinesRef.current.forEach((pl: any) => {
-                        try {
-                            candleSeriesRef.current?.removePriceLine?.(pl);
-                        } catch { /* ignore */
-                        }
-                    });
-                    priceLinesRef.current = [];
-                } catch {
-                }
-
                 // Set data to the charts
                 candleSeriesRef.current?.setData(klineData);
                 volumeSeriesRef.current?.setData(volumeData);
@@ -356,26 +353,33 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                 if (!sma20SeriesRef.current) {
                     sma20SeriesRef.current = mainChartRef.current?.addSeries(LineSeries, {
-                        color: "#8b5cf6", // 使用紫色 (Violet) 以区别 EMA5 (番茄红)
+                        color: "#8b5cf6",
                         lineWidth: 2,
                         lineStyle: 0,
-                        title: "SMA20",   // 方便之后显示 tooltip 区分
+                        title: "SMA20",
                     });
                 }
                 sma20SeriesRef.current?.setData(sma20Data);
+
                 // Fit content to view
                 mainChartRef.current?.timeScale().fitContent();
                 volumeChartRef.current?.timeScale().fitContent();
 
-                // ===== 新增：请求分板接口，画支撑/阻力/转折点 =====
+                // ===== 请求分析接口，画支撑/阻力/转折点 =====
+                // ✅ 同样传入 signal，symbol 切换时自动取消，旧股票分析数据不会落到新图上
                 const analysisRes = await fetch(
-                    `/api/trading-plus/analysis/stock?code=${symbol}`
+                    `/api/trading-plus/analysis/stock?code=${symbol}`,
+                    { signal }
                 );
                 const analysisJson = await analysisRes.json();
+
+                // ✅ 双重保险：若 fetch 实现未抛出 AbortError，这里也拦截
+                if (signal.aborted) return;
 
                 if (analysisJson.code === 0 && analysisJson.data) {
                     const info = analysisJson.data;
                     onAnalysisDataAction(info);
+
                     // --- 支撑线 ---
                     if (info.support) {
                         try {
@@ -403,8 +407,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 title: "Resistance",
                             });
                             if (pl) priceLinesRef.current.push(pl);
-                        } catch (err) {
-                        }
+                        } catch (err) { }
                     }
 
                     // --- 向上转折点 (蓝线) ---
@@ -421,19 +424,16 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const idx1 = klineData.findIndex(d => d.time === p1.time);
                             const idx2 = klineData.findIndex(d => d.time === p2.time);
 
-                            // 计算斜率和截距（基于时间戳）
-                            const x1 = idx1;
-                            const x2 = idx2;
-                            const y1 = p1.low;
-                            const y2 = p2.low;
+                            const x1 = idx1, x2 = idx2;
+                            const y1 = p1.low, y2 = p2.low;
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
 
-                            // --- 实线部分 ---
+                            // 实线部分
                             const upLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
                                 lineWidth: 2,
-                                lineStyle: 0, // 实线
+                                lineStyle: 0,
                             });
                             upLine.setData([
                                 { time: p1.time, value: p1.low },
@@ -441,12 +441,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             ]);
                             trendLinesRef.current.push(upLine);
 
-                            // --- 虚线延伸部分 ---
+                            // 虚线延伸部分
                             const yExtended = slope * idxLast + intercept;
                             const dashedLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#3b82f6",
                                 lineWidth: 2,
-                                lineStyle: 1, // 虚线
+                                lineStyle: 1,
                             });
                             dashedLine.setData([
                                 { time: p2.time, value: p2.low },
@@ -455,7 +455,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             trendLinesRef.current.push(dashedLine);
                         }
                     }
-
 
                     // --- 向下转折点 (橙线) ---
                     if (info.turning_down_point_1 && info.turning_down_point_2) {
@@ -471,19 +470,16 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const idxLast = klineData.length - 1;
                             const last = klineData[idxLast];
 
-                            // 计算斜率和截距（基于时间戳）
-                            const x1 = idx1;
-                            const x2 = idx2;
-                            const y1 = p1.high;
-                            const y2 = p2.high;
+                            const x1 = idx1, x2 = idx2;
+                            const y1 = p1.high, y2 = p2.high;
                             const slope = (y2 - y1) / (x2 - x1);
                             const intercept = y1 - slope * x1;
 
-                            // --- 实线部分 ---
+                            // 实线部分
                             const downLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#f97316", // 橙色
+                                color: "#f97316",
                                 lineWidth: 2,
-                                lineStyle: 0, // 实线
+                                lineStyle: 0,
                             });
                             downLine.setData([
                                 { time: p1.time, value: p1.high },
@@ -491,12 +487,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             ]);
                             trendLinesRef.current.push(downLine);
 
-                            // --- 虚线延伸部分 ---
+                            // 虚线延伸部分
                             const yExtended = slope * idxLast + intercept;
                             const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
                                 color: "#f97316",
                                 lineWidth: 2,
-                                lineStyle: 1, // 虚线
+                                lineStyle: 1,
                             });
                             dashedDownLine.setData([
                                 { time: p2.time, value: p2.high },
@@ -506,8 +502,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         }
                     }
 
-
                     const markers: SeriesMarker<UTCTimestamp>[] = []
+
                     // --- 转折点数组 (箭头自动方向+颜色) ---
                     if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
                         const turningPoints = info.turning
@@ -526,28 +522,25 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                         if (turningPoints.length > 1 && mainChartRef.current) {
                             const turningLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#374151", // 黑色带一点灰
+                                color: "#374151",
                                 lineWidth: 2,
                             });
                             turningLine.setData(turningPoints);
                             trendLinesRef.current.push(turningLine);
 
-                            // 最后一个点决定箭头方向
                             const last = turningPoints[turningPoints.length - 1];
                             const prev = turningPoints[turningPoints.length - 2];
 
-                            let markerColor = "#6b7280"; // 默认灰
+                            let markerColor = "#6b7280";
                             let markerShape: "arrowUp" | "arrowDown" | "circle" = "circle";
                             let markerPosition: "aboveBar" | "belowBar" = "aboveBar";
 
                             if (last.value < prev.value) {
-                                // 上涨转折
-                                markerColor = "#22c55e"; // 绿色
+                                markerColor = "#22c55e";
                                 markerShape = "arrowUp";
                                 markerPosition = "belowBar";
                             } else if (last.value > prev.value) {
-                                // 下跌转折
-                                markerColor = "#ef4444"; // 红色
+                                markerColor = "#ef4444";
                                 markerShape = "arrowDown";
                                 markerPosition = "aboveBar";
                             }
@@ -562,7 +555,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         }
                     }
 
-
                     // --- 修复标记（Markers）逻辑 ---
                     if (info.candlestick_patterns && Array.isArray(info.candlestick_patterns)) {
                         const markerMap = new Map<UTCTimestamp, SeriesMarker<UTCTimestamp>>();
@@ -576,22 +568,20 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                                 let position: "aboveBar" | "belowBar" = "aboveBar";
 
                                 if (info.candlestick_signal === 1) { // 看涨
-                                    color = "#22c55e"; // green
+                                    color = "#22c55e";
                                     shape = "arrowUp";
                                     position = "belowBar";
                                 } else if (info.candlestick_signal === -1) { // 看跌
-                                    color = "#ef4444"; // red
+                                    color = "#ef4444";
                                     shape = "arrowDown";
                                     position = "aboveBar";
                                 }
 
-                                // 如果同一天已有 marker，则合并文字
                                 if (markerMap.has(ts)) {
                                     const existing = markerMap.get(ts)!;
                                     existing.text = existing.text
                                         ? `${existing.text}, ${pattern.label}`
                                         : pattern.label;
-                                    // 保持颜色/形状/位置不变（或根据优先级更新）
                                 } else {
                                     markerMap.set(ts, {
                                         time: ts,
@@ -604,7 +594,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             });
                         });
 
-                        markers.push(...(Array.from(markerMap.values())));
+                        markers.push(...Array.from(markerMap.values()));
                     }
                     candleSeriesMarkersRef.current?.setMarkers(markers);
                 }
@@ -619,12 +609,21 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         close: latestData.close,
                     });
                 }
-            } catch (e) {
+            } catch (e: any) {
+                // ✅ AbortError 是 symbol 切换触发的正常取消，静默处理不弹 toast
+                if (e?.name === 'AbortError') return;
                 console.error("Failed to fetch K-line or analysis data:", e);
             }
         };
 
+        // ✅ 发起新请求前立即清图，防止切换期间旧图线短暂可见
+        clearOverlays();
         fetchData().then();
+
+        // ✅ cleanup：symbol 变化或组件卸载时调用，取消所有 in-flight 请求
+        return () => {
+            controller.abort();
+        };
     }, [symbol]);
 
     return (
