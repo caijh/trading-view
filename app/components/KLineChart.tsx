@@ -40,19 +40,17 @@ const findClosestPoint = (data: OhlcData[], targetTime: number): OhlcData | null
     return data.find(d => d.time === targetTime) || null;
 };
 
-
 // Compute Exponential Moving Average (EMA)
 const calculateEMA = (data: OhlcData[], period: number): OhlcData[] => {
     const ema: OhlcData[] = [];
-    const k = 2 / (period + 1); // smoothing factor
-    let previousEMA = data[0].close; // First EMA is just the first close
+    const k = 2 / (period + 1);
+    let previousEMA = data[0].close;
 
     for (let i = 0; i < data.length; i++) {
         const current = data[i];
         const currentEMA = current.close * k + previousEMA * (1 - k);
-        // @ts-expect-error: The 'value' property is not present on the original type, but it's being added here to store the EMA value
-        ema.push({...current, value: currentEMA}); // Store value as 'value' key
-
+        // @ts-expect-error: adding 'value' for LineSeries
+        ema.push({...current, value: currentEMA});
         previousEMA = currentEMA;
     }
 
@@ -63,7 +61,7 @@ const calculateEMA = (data: OhlcData[], period: number): OhlcData[] => {
 const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
     const sma: OhlcData[] = [];
     for (let i = 0; i < data.length; i++) {
-        if (i < period - 1) continue; // 简单移动平均线前 N-1 个点无法计算
+        if (i < period - 1) continue;
 
         let sum = 0;
         for (let j = 0; j < period; j++) {
@@ -77,21 +75,22 @@ const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
     return sma;
 };
 
-const getTime = (symbol: string, date: string) : UTCTimestamp => {
-    let locale = enUS
-    let time_str = date + "160000"
+const getTime = (symbol: string, date: string): UTCTimestamp => {
+    let locale = enUS;
+    let time_str = date + "160000";
     if (symbol.endsWith('.SH') || symbol.endsWith('.SZ')) {
-        time_str = date + "150000"
-        locale = zhCN
+        time_str = date + "150000";
+        locale = zhCN;
     }
-    if (symbol.endsWith('.HK')){
-        locale = zhCN
+    if (symbol.endsWith('.HK')) {
+        locale = zhCN;
     }
-    let time = parse(time_str, 'yyyyMMddHHmmss', new Date(),{
-        locale: locale
-    })
-    return Math.floor(time.getTime() / 1000) as UTCTimestamp
-}
+    const time = parse(time_str, 'yyyyMMddHHmmss', new Date(), { locale });
+    return Math.floor(time.getTime() / 1000) as UTCTimestamp;
+};
+
+// 实时价格轮询间隔（毫秒）
+const REALTIME_POLL_INTERVAL = 10_000; // 10 秒
 
 // Main KLineChart component
 export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMoveAction, onLatestOHLCAction }: {
@@ -110,72 +109,45 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
     const candleSeriesMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
     const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
-    // keep refs for any line series we add so we can manage/cleanup later if needed
     const trendLinesRef = useRef<ISeriesApi<"Line">[]>([]);
-    const priceLinesRef = useRef<any[]>([]); // price line objects (no strict typing here)
+    const priceLinesRef = useRef<any[]>([]);
 
-    const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined); // Store EMA5 series
+    const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
     const sma20SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
 
-    // Store kline data for crosshair lookup
     const klineDataRef = useRef<OhlcData[]>([]);
 
-    // Store the onCrosshairMove callback in a ref to avoid dependency issues
+    // 实时轮询的 timer ref，symbol 切换或闭市时清除
+    const realtimeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     const onCrosshairMoveRef = useRef(onCrosshairMoveAction);
-    useEffect(() => {
-        onCrosshairMoveRef.current = onCrosshairMoveAction;
-    }, [onCrosshairMoveAction]);
+    useEffect(() => { onCrosshairMoveRef.current = onCrosshairMoveAction; }, [onCrosshairMoveAction]);
 
-    // Store the onLatestOHLC callback in a ref to avoid dependency issues
     const onLatestOHLCRef = useRef(onLatestOHLCAction);
-    useEffect(() => {
-        onLatestOHLCRef.current = onLatestOHLCAction;
-    }, [onLatestOHLCAction]);
+    useEffect(() => { onLatestOHLCRef.current = onLatestOHLCAction; }, [onLatestOHLCAction]);
 
-    let locale = 'ja-JP'
-    if (symbol.endsWith('.NS')){
-        locale = 'en-US'
-    }
+    let locale = 'ja-JP';
+    if (symbol.endsWith('.NS')) locale = 'en-US';
 
-    // Initialize charts (runs once)
+    // ─── 初始化图表（只执行一次）────────────────────────────────────────────
     useEffect(() => {
         if (!chartContainerRef.current || !volumeContainerRef.current) return;
 
-        // Main Chart - Candlestick
         const mainChart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
             height: window.innerHeight - 500,
-            layout: {
-                background: {color: "#ffffff"},
-                textColor: "#0f172a",
-            },
-            rightPriceScale: {
-                borderVisible: false,
-            },
-            timeScale: {
-                visible: false,
-            },
+            layout: { background: { color: "#ffffff" }, textColor: "#0f172a" },
+            rightPriceScale: { borderVisible: false },
+            timeScale: { visible: false },
             crosshair: {
-                mode: 1, // Normal mode
-                vertLine: {
-                    visible: true,
-                    labelVisible: true,
-                },
-                horzLine: {
-                    visible: true,
-                    labelVisible: true,
-                },
+                mode: 1,
+                vertLine: { visible: true, labelVisible: true },
+                horzLine: { visible: true, labelVisible: true },
             },
         });
-        mainChart.applyOptions({
-            localization: {
-                locale: locale,
-                dateFormat: 'yyyy-MM-dd'
-            },
-        });
+        mainChart.applyOptions({ localization: { locale, dateFormat: 'yyyy-MM-dd' } });
         mainChartRef.current = mainChart;
 
-        // Candlestick Series
         candleSeriesRef.current = mainChart.addSeries(CandlestickSeries, {
             upColor: "#16a34a",
             downColor: "#ef4444",
@@ -183,87 +155,56 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
             wickUpColor: "#16a34a",
             wickDownColor: "#ef4444",
         });
-        candleSeriesMarkersRef.current = createSeriesMarkers(candleSeriesRef.current, [])
+        candleSeriesMarkersRef.current = createSeriesMarkers(candleSeriesRef.current, []);
 
-        // Volume Chart - Histogram
         const volumeChart = createChart(volumeContainerRef.current, {
             width: volumeContainerRef.current.clientWidth,
             height: 300,
-            layout: {
-                background: {color: "#ffffff"},
-                textColor: "#0f172a",
-            },
-            rightPriceScale: {
-                borderVisible: false,
-            },
-            timeScale: {
-                borderVisible: false,
-                timeVisible: true,
-            },
+            layout: { background: { color: "#ffffff" }, textColor: "#0f172a" },
+            rightPriceScale: { borderVisible: false },
+            timeScale: { borderVisible: false, timeVisible: true },
         });
-        volumeChart.applyOptions({
-            localization: {
-                locale: locale,
-                dateFormat: 'yyyy-MM-dd'
-            },
-        });
+        volumeChart.applyOptions({ localization: { locale, dateFormat: 'yyyy-MM-dd' } });
         volumeChartRef.current = volumeChart;
 
-        // Histogram Series
         volumeSeriesRef.current = volumeChart.addSeries(HistogramSeries, {
             color: "#26a69a",
-            priceFormat: {
-                type: "volume",
-            },
+            priceFormat: { type: "volume" },
             priceScaleId: "volume",
         });
 
-        // Sync time scales
         syncCharts([mainChart, volumeChart]);
 
-        // Subscribe to crosshair move events - use crosshair move to track data
         mainChart.subscribeCrosshairMove(param => {
             if (!param.point || !param.time) {
                 onCrosshairMoveRef.current?.(null);
                 return;
             }
-
-            // Find the kline data point at the crosshair time
             const dataPoint = klineDataRef.current.find(d => d.time === param.time);
-
             if (dataPoint) {
                 onCrosshairMoveRef.current?.({
-                    open: dataPoint.open,
-                    high: dataPoint.high,
-                    low: dataPoint.low,
-                    close: dataPoint.close,
+                    open: dataPoint.open, high: dataPoint.high,
+                    low: dataPoint.low, close: dataPoint.close,
                 });
             } else {
                 onCrosshairMoveRef.current?.(null);
             }
         });
 
-        // Handle resize
         const handleResize = () => {
             if (chartContainerRef.current && volumeContainerRef.current) {
-                mainChart.applyOptions({width: chartContainerRef.current.clientWidth});
-                volumeChart.applyOptions({width: volumeContainerRef.current.clientWidth});
+                mainChart.applyOptions({ width: chartContainerRef.current.clientWidth });
+                volumeChart.applyOptions({ width: volumeContainerRef.current.clientWidth });
             }
         };
         window.addEventListener("resize", handleResize);
 
         return () => {
             window.removeEventListener("resize", handleResize);
-
             try {
-                trendLinesRef.current.forEach(ts => {
-                    try {
-                        mainChart.removeSeries(ts);
-                    } catch { /* ignore */ }
-                });
+                trendLinesRef.current.forEach(ts => { try { mainChart.removeSeries(ts); } catch { } });
                 trendLinesRef.current = [];
             } catch { }
-
             mainChart.remove();
             volumeChart.remove();
             mainChartRef.current = null;
@@ -271,39 +212,101 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         };
     }, []);
 
-    // Fetch data and update chart on symbol change
+    // ─── symbol 变化时：加载历史数据 + 分析线 + 按需开启实时轮询 ────────────
     useEffect(() => {
         if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-        // ✅ 每次 symbol 变化创建新 AbortController
-        // cleanup 时调用 abort()，取消所有尚未完成的请求，彻底避免竞态
+        // 每次 symbol 变化先停掉旧轮询
+        if (realtimeTimerRef.current) {
+            clearInterval(realtimeTimerRef.current);
+            realtimeTimerRef.current = null;
+        }
+
         const controller = new AbortController();
         const { signal } = controller;
 
-        // ✅ 抽离清图逻辑，symbol 切换后立即同步执行
-        // 防止旧股票图线在新请求返回前短暂残留，或旧请求慢返回后污染新图
+        // 立即清图，避免旧图线残留
         const clearOverlays = () => {
             try {
-                trendLinesRef.current.forEach(ts => {
-                    try { mainChartRef.current?.removeSeries(ts); } catch { /* ignore */ }
-                });
+                trendLinesRef.current.forEach(ts => { try { mainChartRef.current?.removeSeries(ts); } catch { } });
                 trendLinesRef.current = [];
-
-                priceLinesRef.current.forEach((pl: any) => {
-                    try { candleSeriesRef.current?.removePriceLine?.(pl); } catch { /* ignore */ }
-                });
+                priceLinesRef.current.forEach((pl: any) => { try { candleSeriesRef.current?.removePriceLine?.(pl); } catch { } });
                 priceLinesRef.current = [];
-
                 candleSeriesMarkersRef.current?.setMarkers([]);
-            } catch { /* ignore */ }
+            } catch { }
         };
 
+        // ── 实时价格：用接口数据更新/追加最新一根日线 ──────────────────────
+        const applyRealtimePrice = (priceData: any) => {
+            if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
+
+            const dateStr = priceData.time.split(' ')[0].replace(/-/g, ''); // "20260409"
+            const ts = getTime(symbol, dateStr);
+
+            const updatedCandle: OhlcData = {
+                time: ts,
+                open:  parseFloat(priceData.open),
+                high:  parseFloat(priceData.high),
+                low:   parseFloat(priceData.low),
+                close: parseFloat(priceData.close),
+            };
+
+            // update() 会更新已存在的 bar，或追加新 bar（当天首次出现）
+            candleSeriesRef.current.update(updatedCandle);
+            volumeSeriesRef.current.update({
+                time: ts,
+                value: parseFloat(priceData.volume),
+                // 用收盘 vs 开盘决定颜色
+                color: updatedCandle.close >= updatedCandle.open ? "#16a34a" : "#ef4444",
+            });
+
+            // 同步更新本地缓存（crosshair 查找用）
+            const idx = klineDataRef.current.findIndex(d => d.time === ts);
+            if (idx >= 0) {
+                klineDataRef.current[idx] = updatedCandle;
+            } else {
+                klineDataRef.current.push(updatedCandle);
+            }
+
+            // 通知父组件最新 OHLC
+            onLatestOHLCRef.current?.({
+                open: updatedCandle.open, high: updatedCandle.high,
+                low: updatedCandle.low, close: updatedCandle.close,
+            });
+        };
+
+        // ── 启动实时轮询 ────────────────────────────────────────────────────
+        const startRealtimePolling = () => {
+            // 立即拉一次
+            fetchRealtimePrice().then(r => {});
+            realtimeTimerRef.current = setInterval(fetchRealtimePrice, REALTIME_POLL_INTERVAL);
+        };
+
+        const fetchRealtimePrice = async () => {
+            // 组件已卸载或 symbol 已切换则停止
+            if (signal.aborted) {
+                if (realtimeTimerRef.current) {
+                    clearInterval(realtimeTimerRef.current);
+                    realtimeTimerRef.current = null;
+                }
+                return;
+            }
+            try {
+                const res = await fetch(`/api/trading-data/stock/price?code=${symbol}`);
+                if (!res.ok) return;
+                const json = await res.json();
+                if (json.code === 0 && json.data) {
+                    applyRealtimePrice(json.data);
+                }
+            } catch {
+                // 网络抖动静默处理，下次 interval 继续
+            }
+        };
+
+        // ── 主流程：加载历史 K 线 ────────────────────────────────────────────
         const fetchData = async () => {
             try {
-                // Fetch K线数据
-                const API_URL = `/api/trading-data/stock/price/daily?code=${symbol}`;
-                // ✅ 传入 signal：symbol 切换触发 cleanup → abort() → 此 fetch 立即抛出 AbortError
-                const response = await fetch(API_URL, { signal });
+                const response = await fetch(`/api/trading-data/stock/price/daily?code=${symbol}`, { signal });
                 if (!response.ok) {
                     toast.error(`HTTP error! status: ${response.status}`);
                     return;
@@ -315,7 +318,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     return;
                 }
 
-                // Map API data to Lightweight Charts format
                 const klineData: OhlcData[] = data.data.map((d: any) => ({
                     time: getTime(symbol, d.date),
                     open: parseFloat(d.open),
@@ -330,91 +332,92 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     color: parseFloat(d.close) >= parseFloat(d.open) ? "#16a34a" : "#ef4444",
                 }));
 
-                // Set data to the charts
+                clearOverlays();
+
                 candleSeriesRef.current?.setData(klineData);
                 volumeSeriesRef.current?.setData(volumeData);
-
-                // Store kline data for crosshair lookup
                 klineDataRef.current = klineData;
 
-                // Calculate EMA5 data
+                // EMA5
                 const eam5Data = calculateEMA(klineData, 5);
-                // Add EMA5 Line
                 if (!eam5SeriesRef.current) {
                     eam5SeriesRef.current = mainChartRef.current?.addSeries(LineSeries, {
-                        color: "#ff6347", // Tomato color for EMA5
-                        lineWidth: 2,
-                        lineStyle: 0, // Solid line
-                        title: 'EMA5'
+                        color: "#ff6347", lineWidth: 2, lineStyle: 0, title: 'EMA5',
                     });
                 }
                 eam5SeriesRef.current?.setData(eam5Data);
-                const sma20Data = calculateSMA(klineData, 20);
 
+                // SMA20
+                const sma20Data = calculateSMA(klineData, 20);
                 if (!sma20SeriesRef.current) {
                     sma20SeriesRef.current = mainChartRef.current?.addSeries(LineSeries, {
-                        color: "#8b5cf6",
-                        lineWidth: 2,
-                        lineStyle: 0,
-                        title: "SMA20",
+                        color: "#8b5cf6", lineWidth: 2, lineStyle: 0, title: "SMA20",
                     });
                 }
                 sma20SeriesRef.current?.setData(sma20Data);
 
-                // Fit content to view
                 mainChartRef.current?.timeScale().fitContent();
                 volumeChartRef.current?.timeScale().fitContent();
 
-                // ===== 请求分析接口，画支撑/阻力/转折点 =====
-                // ✅ 同样传入 signal，symbol 切换时自动取消，旧股票分析数据不会落到新图上
+                // 通知父组件最新静态 OHLC
+                const latestData = klineData[klineData.length - 1];
+                onLatestOHLCRef.current?.({
+                    open: latestData.open, high: latestData.high,
+                    low: latestData.low, close: latestData.close,
+                });
+
+                // ── 检查市场状态，决定是否开启实时轮询 ──────────────────────
+                const statusRes = await fetch(`/api/trading-data/market/status?stock_code=${symbol}`, { signal });
+                if (signal.aborted) return;
+
+                if (statusRes.ok) {
+                    const statusJson = await statusRes.json();
+                    // data 为 "MarketOpen" 或其他非 "MarketClosed" 字符串视为开市
+                    const isOpen = statusJson.code === 0 && statusJson.data !== "MarketClosed";
+                    if (isOpen) {
+                        startRealtimePolling();
+                    }
+                }
+
+                // ── 分析接口：画支撑/阻力/转折点 ─────────────────────────────
                 const analysisRes = await fetch(
                     `/api/trading-plus/analysis/stock?code=${symbol}`,
                     { signal }
                 );
-                const analysisJson = await analysisRes.json();
-
-                // ✅ 双重保险：若 fetch 实现未抛出 AbortError，这里也拦截
                 if (signal.aborted) return;
+
+                const analysisJson = await analysisRes.json();
 
                 if (analysisJson.code === 0 && analysisJson.data) {
                     const info = analysisJson.data;
                     onAnalysisDataAction(info);
 
-                    // --- 支撑线 ---
+                    // 支撑线
                     if (info.support) {
                         try {
                             const pl = candleSeriesRef.current?.createPriceLine({
-                                price: info.support,
-                                color: "#22c55e",
-                                lineWidth: 2,
-                                lineStyle: 2, // dashed
-                                title: "Support",
+                                price: info.support, color: "#22c55e",
+                                lineWidth: 2, lineStyle: 2, title: "Support",
                             });
                             if (pl) priceLinesRef.current.push(pl);
-                        } catch (err) {
-                            // ignore if API variant does not support remove later
-                        }
+                        } catch { }
                     }
 
-                    // --- 阻力线 ---
+                    // 阻力线
                     if (info.resistance) {
                         try {
                             const pl = candleSeriesRef.current?.createPriceLine({
-                                price: info.resistance,
-                                color: "#ef4444",
-                                lineWidth: 2,
-                                lineStyle: 2, // dashed
-                                title: "Resistance",
+                                price: info.resistance, color: "#ef4444",
+                                lineWidth: 2, lineStyle: 2, title: "Resistance",
                             });
                             if (pl) priceLinesRef.current.push(pl);
-                        } catch (err) { }
+                        } catch { }
                     }
 
-                    // --- 向上转折点 (蓝线) ---
+                    // 向上转折点（蓝线）
                     if (info.turning_up_point_1 && info.turning_up_point_2) {
                         const up2 = getTime(symbol, info.turning_up_point_1.replaceAll('-', ''));
                         const up1 = getTime(symbol, info.turning_up_point_2.replaceAll('-', ''));
-
                         const p1 = findClosestPoint(klineData, up1);
                         const p2 = findClosestPoint(klineData, up2);
 
@@ -423,206 +426,119 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                             const last = klineData[idxLast];
                             const idx1 = klineData.findIndex(d => d.time === p1.time);
                             const idx2 = klineData.findIndex(d => d.time === p2.time);
+                            const slope = (p2.low - p1.low) / (idx2 - idx1);
+                            const intercept = p1.low - slope * idx1;
 
-                            const x1 = idx1, x2 = idx2;
-                            const y1 = p1.low, y2 = p2.low;
-                            const slope = (y2 - y1) / (x2 - x1);
-                            const intercept = y1 - slope * x1;
-
-                            // 实线部分
-                            const upLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#3b82f6",
-                                lineWidth: 2,
-                                lineStyle: 0,
-                            });
-                            upLine.setData([
-                                { time: p1.time, value: p1.low },
-                                { time: p2.time, value: p2.low },
-                            ]);
+                            const upLine = mainChartRef.current.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 2, lineStyle: 0 });
+                            upLine.setData([{ time: p1.time, value: p1.low }, { time: p2.time, value: p2.low }]);
                             trendLinesRef.current.push(upLine);
 
-                            // 虚线延伸部分
-                            const yExtended = slope * idxLast + intercept;
-                            const dashedLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#3b82f6",
-                                lineWidth: 2,
-                                lineStyle: 1,
-                            });
-                            dashedLine.setData([
-                                { time: p2.time, value: p2.low },
-                                { time: last.time, value: yExtended },
-                            ]);
+                            const dashedLine = mainChartRef.current.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 2, lineStyle: 1 });
+                            dashedLine.setData([{ time: p2.time, value: p2.low }, { time: last.time, value: slope * idxLast + intercept }]);
                             trendLinesRef.current.push(dashedLine);
                         }
                     }
 
-                    // --- 向下转折点 (橙线) ---
+                    // 向下转折点（橙线）
                     if (info.turning_down_point_1 && info.turning_down_point_2) {
                         const dn2 = getTime(symbol, info.turning_down_point_1.replaceAll('-', ''));
                         const dn1 = getTime(symbol, info.turning_down_point_2.replaceAll('-', ''));
-
                         const p1 = findClosestPoint(klineData, dn1);
                         const p2 = findClosestPoint(klineData, dn2);
 
                         if (p1 && p2 && mainChartRef.current) {
-                            const idx1 = klineData.findIndex(d => d.time === p1.time);
-                            const idx2 = klineData.findIndex(d => d.time === p2.time);
                             const idxLast = klineData.length - 1;
                             const last = klineData[idxLast];
+                            const idx1 = klineData.findIndex(d => d.time === p1.time);
+                            const idx2 = klineData.findIndex(d => d.time === p2.time);
+                            const slope = (p2.high - p1.high) / (idx2 - idx1);
+                            const intercept = p1.high - slope * idx1;
 
-                            const x1 = idx1, x2 = idx2;
-                            const y1 = p1.high, y2 = p2.high;
-                            const slope = (y2 - y1) / (x2 - x1);
-                            const intercept = y1 - slope * x1;
-
-                            // 实线部分
-                            const downLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#f97316",
-                                lineWidth: 2,
-                                lineStyle: 0,
-                            });
-                            downLine.setData([
-                                { time: p1.time, value: p1.high },
-                                { time: p2.time, value: p2.high },
-                            ]);
+                            const downLine = mainChartRef.current.addSeries(LineSeries, { color: "#f97316", lineWidth: 2, lineStyle: 0 });
+                            downLine.setData([{ time: p1.time, value: p1.high }, { time: p2.time, value: p2.high }]);
                             trendLinesRef.current.push(downLine);
 
-                            // 虚线延伸部分
-                            const yExtended = slope * idxLast + intercept;
-                            const dashedDownLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#f97316",
-                                lineWidth: 2,
-                                lineStyle: 1,
-                            });
-                            dashedDownLine.setData([
-                                { time: p2.time, value: p2.high },
-                                { time: last.time, value: yExtended },
-                            ]);
+                            const dashedDownLine = mainChartRef.current.addSeries(LineSeries, { color: "#f97316", lineWidth: 2, lineStyle: 1 });
+                            dashedDownLine.setData([{ time: p2.time, value: p2.high }, { time: last.time, value: slope * idxLast + intercept }]);
                             trendLinesRef.current.push(dashedDownLine);
                         }
                     }
 
-                    const markers: SeriesMarker<UTCTimestamp>[] = []
+                    const markers: SeriesMarker<UTCTimestamp>[] = [];
 
-                    // --- 转折点数组 (箭头自动方向+颜色) ---
+                    // 转折点数组
                     if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
                         const turningPoints = info.turning
                             .map((item: { time: string; type: number }) => {
-                                const time = item.time.split(' ')[0].replaceAll('-', '')
+                                const time = item.time.split(' ')[0].replaceAll('-', '');
                                 const ts = getTime(symbol, time);
                                 const p = findClosestPoint(klineData, ts);
                                 if (!p) return null;
-
-                                return {
-                                    time: p.time,
-                                    value: item.type === 1 ? p.low : p.high,
-                                };
+                                return { time: p.time, value: item.type === 1 ? p.low : p.high };
                             })
                             .filter(Boolean) as { time: UTCTimestamp; value: number }[];
 
                         if (turningPoints.length > 1 && mainChartRef.current) {
-                            const turningLine = mainChartRef.current.addSeries(LineSeries, {
-                                color: "#374151",
-                                lineWidth: 2,
-                            });
+                            const turningLine = mainChartRef.current.addSeries(LineSeries, { color: "#374151", lineWidth: 2 });
                             turningLine.setData(turningPoints);
                             trendLinesRef.current.push(turningLine);
 
                             const last = turningPoints[turningPoints.length - 1];
                             const prev = turningPoints[turningPoints.length - 2];
-
                             let markerColor = "#6b7280";
                             let markerShape: "arrowUp" | "arrowDown" | "circle" = "circle";
                             let markerPosition: "aboveBar" | "belowBar" = "aboveBar";
 
                             if (last.value < prev.value) {
-                                markerColor = "#22c55e";
-                                markerShape = "arrowUp";
-                                markerPosition = "belowBar";
+                                markerColor = "#22c55e"; markerShape = "arrowUp"; markerPosition = "belowBar";
                             } else if (last.value > prev.value) {
-                                markerColor = "#ef4444";
-                                markerShape = "arrowDown";
-                                markerPosition = "aboveBar";
+                                markerColor = "#ef4444"; markerShape = "arrowDown"; markerPosition = "aboveBar";
                             }
-
-                            markers.push({
-                                time: last.time,
-                                position: markerPosition,
-                                color: markerColor,
-                                shape: markerShape,
-                                text: "Turning",
-                            });
+                            markers.push({ time: last.time, position: markerPosition, color: markerColor, shape: markerShape, text: "Turning" });
                         }
                     }
 
-                    // --- 修复标记（Markers）逻辑 ---
+                    // K 线形态 Markers
                     if (info.candlestick_patterns && Array.isArray(info.candlestick_patterns)) {
                         const markerMap = new Map<UTCTimestamp, SeriesMarker<UTCTimestamp>>();
-
                         info.candlestick_patterns.forEach((pattern: any) => {
                             pattern.match_indexes.forEach((dateStr: string) => {
                                 const ts = Math.floor(new Date(dateStr).getTime() / 1000) as UTCTimestamp;
-
-                                let color = "#facc15"; // neutral
+                                let color = "#facc15";
                                 let shape: "arrowUp" | "arrowDown" | "circle" = "circle";
                                 let position: "aboveBar" | "belowBar" = "aboveBar";
 
-                                if (info.candlestick_signal === 1) { // 看涨
-                                    color = "#22c55e";
-                                    shape = "arrowUp";
-                                    position = "belowBar";
-                                } else if (info.candlestick_signal === -1) { // 看跌
-                                    color = "#ef4444";
-                                    shape = "arrowDown";
-                                    position = "aboveBar";
-                                }
+                                if (info.candlestick_signal === 1) { color = "#22c55e"; shape = "arrowUp"; position = "belowBar"; }
+                                else if (info.candlestick_signal === -1) { color = "#ef4444"; shape = "arrowDown"; position = "aboveBar"; }
 
                                 if (markerMap.has(ts)) {
                                     const existing = markerMap.get(ts)!;
-                                    existing.text = existing.text
-                                        ? `${existing.text}, ${pattern.label}`
-                                        : pattern.label;
+                                    existing.text = existing.text ? `${existing.text}, ${pattern.label}` : pattern.label;
                                 } else {
-                                    markerMap.set(ts, {
-                                        time: ts,
-                                        position,
-                                        color,
-                                        shape,
-                                        text: pattern.label,
-                                    });
+                                    markerMap.set(ts, { time: ts, position, color, shape, text: pattern.label });
                                 }
                             });
                         });
-
                         markers.push(...Array.from(markerMap.values()));
                     }
                     candleSeriesMarkersRef.current?.setMarkers(markers);
                 }
-
-                // Send latest OHLC data to parent component
-                if (klineData.length > 0) {
-                    const latestData = klineData[klineData.length - 1];
-                    onLatestOHLCRef.current?.({
-                        open: latestData.open,
-                        high: latestData.high,
-                        low: latestData.low,
-                        close: latestData.close,
-                    });
-                }
             } catch (e: any) {
-                // ✅ AbortError 是 symbol 切换触发的正常取消，静默处理不弹 toast
                 if (e?.name === 'AbortError') return;
                 console.error("Failed to fetch K-line or analysis data:", e);
             }
         };
 
-        // ✅ 发起新请求前立即清图，防止切换期间旧图线短暂可见
         clearOverlays();
         fetchData().then();
 
-        // ✅ cleanup：symbol 变化或组件卸载时调用，取消所有 in-flight 请求
         return () => {
+            // symbol 切换或卸载：取消所有请求 + 停止实时轮询
             controller.abort();
+            if (realtimeTimerRef.current) {
+                clearInterval(realtimeTimerRef.current);
+                realtimeTimerRef.current = null;
+            }
         };
     }, [symbol]);
 
