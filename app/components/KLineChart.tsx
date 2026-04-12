@@ -75,22 +75,17 @@ const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
     return sma;
 };
 
-const getTime = (symbol: string, date: string): UTCTimestamp => {
+const getTime = (symbol: string, datetime_str: string, format_str: string): UTCTimestamp => {
     let locale = enUS;
-    let time_str = date + "160000";
-    if (symbol.endsWith('.SH') || symbol.endsWith('.SZ')) {
-        time_str = date + "150000";
+    if (symbol.endsWith('.SH') || symbol.endsWith('.SZ') || symbol.endsWith('.HK')) {
         locale = zhCN;
     }
-    if (symbol.endsWith('.HK')) {
-        locale = zhCN;
-    }
-    const time = parse(time_str, 'yyyyMMddHHmmss', new Date(), { locale });
+    const time = parse(datetime_str, format_str, new Date(), { locale });
     return Math.floor(time.getTime() / 1000) as UTCTimestamp;
 };
 
 // 实时价格轮询间隔（毫秒）
-const REALTIME_POLL_INTERVAL = 10_000; // 10 秒
+const REALTIME_POLL_INTERVAL = 30_000; // 30 秒
 
 // Main KLineChart component
 export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMoveAction, onLatestOHLCAction }: {
@@ -240,8 +235,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         const applyRealtimePrice = (priceData: any) => {
             if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-            const dateStr = priceData.time.split(' ')[0].replace(/-/g, ''); // "20260409"
-            const ts = getTime(symbol, dateStr);
+            const dateStr = priceData.time;
+            const ts = getTime(symbol, dateStr, 'yyyy-MM-dd HH:mm:ss');
 
             const updatedCandle: OhlcData = {
                 time: ts,
@@ -322,7 +317,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 }
 
                 const klineData: OhlcData[] = data.data.map((d: any) => ({
-                    time: getTime(symbol, d.date),
+                    time: getTime(symbol, String(d.time), 'yyyyMMddHHmmss'),
                     open: parseFloat(d.open),
                     high: parseFloat(d.high),
                     low: parseFloat(d.low),
@@ -419,8 +414,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                     // 向上转折点（蓝线）
                     if (info.turning_up_point_1 && info.turning_up_point_2) {
-                        const up2 = getTime(symbol, info.turning_up_point_1.replaceAll('-', ''));
-                        const up1 = getTime(symbol, info.turning_up_point_2.replaceAll('-', ''));
+                        const up2 = getTime(symbol, info.turning_up_point_1, 'yyyy-MM-dd HH:mm:ss');
+                        const up1 = getTime(symbol, info.turning_up_point_2, 'yyyy-MM-dd HH:mm:ss');
                         const p1 = findClosestPoint(klineData, up1);
                         const p2 = findClosestPoint(klineData, up2);
 
@@ -444,8 +439,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                     // 向下转折点（橙线）
                     if (info.turning_down_point_1 && info.turning_down_point_2) {
-                        const dn2 = getTime(symbol, info.turning_down_point_1.replaceAll('-', ''));
-                        const dn1 = getTime(symbol, info.turning_down_point_2.replaceAll('-', ''));
+                        const dn2 = getTime(symbol, info.turning_down_point_1, 'yyyy-MM-dd HH:mm:ss');
+                        const dn1 = getTime(symbol, info.turning_down_point_2, 'yyyy-MM-dd HH:mm:ss');
                         const p1 = findClosestPoint(klineData, dn1);
                         const p2 = findClosestPoint(klineData, dn2);
 
@@ -473,8 +468,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
                         const turningPoints = info.turning
                             .map((item: { time: string; type: number }) => {
-                                const time = item.time.split(' ')[0].replaceAll('-', '');
-                                const ts = getTime(symbol, time);
+                                const time = item.time;
+                                const ts = getTime(symbol, time, 'yyyy-MM-dd HH:mm:ss');
                                 const p = findClosestPoint(klineData, ts);
                                 if (!p) return null;
                                 return { time: p.time, value: item.type === 1 ? p.low : p.high };
