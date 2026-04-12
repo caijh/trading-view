@@ -235,7 +235,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         const applyRealtimePrice = (priceData: any) => {
             if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-            const dateStr = priceData.time;
+            const dateStr = priceData.time.split(' ')[0] + ' 09:30:00';
             const ts = getTime(symbol, dateStr, 'yyyy-MM-dd HH:mm:ss');
 
             const updatedCandle: OhlcData = {
