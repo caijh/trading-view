@@ -246,16 +246,14 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 close: parseFloat(priceData.close),
             };
 
-            // update() 会更新已存在的 bar，或追加新 bar（当天首次出现）
             candleSeriesRef.current.update(updatedCandle);
             volumeSeriesRef.current.update({
                 time: ts,
                 value: parseFloat(priceData.volume),
-                // 用收盘 vs 开盘决定颜色
                 color: updatedCandle.close >= updatedCandle.open ? "#16a34a" : "#ef4444",
             });
 
-            // 同步更新本地缓存（crosshair 查找用）
+            // ── 同步更新本地缓存 ─────────────────────────────────────────────────
             const idx = klineDataRef.current.findIndex(d => d.time === ts);
             if (idx >= 0) {
                 klineDataRef.current[idx] = updatedCandle;
@@ -263,7 +261,23 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 klineDataRef.current.push(updatedCandle);
             }
 
-            // 通知父组件最新 OHLC
+            // ── 更新均线（只 update 最新一个点，不做全量 setData）────────────────
+            const latestKline = klineDataRef.current;
+
+            // EMA5：k 值 = 2/(5+1)，从头迭代拿到最新 EMA 值
+            if (eam5SeriesRef.current && latestKline.length >= 1) {
+                const ema5All = calculateEMA(latestKline, 5);
+                const last = ema5All[ema5All.length - 1];
+                if (last) eam5SeriesRef.current.update(last as any);
+            }
+
+            // SMA20：只需最近 20 根收盘价均值
+            if (sma20SeriesRef.current && latestKline.length >= 20) {
+                const sum = latestKline.slice(-20).reduce((acc, d) => acc + d.close, 0);
+                sma20SeriesRef.current.update({ time: ts, value: sum / 20 } as any);
+            }
+
+            // ── 通知父组件最新 OHLC ──────────────────────────────────────────────
             onLatestOHLCRef.current?.({
                 open: updatedCandle.open, high: updatedCandle.high,
                 low: updatedCandle.low, close: updatedCandle.close,
