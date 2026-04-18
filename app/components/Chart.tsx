@@ -11,8 +11,8 @@ export default function Chart() {
     const code = searchParams.get("code");
 
     const [symbol, setSymbol] = useState<{ ticker: string; name: string }>({
-        ticker: code || "SPX.NS",
-        name: code || '标普500指数',
+        ticker: "SPX.NS",
+        name: '标普500指数',
     });
 
     const [showModal, setShowModal] = useState(false);
@@ -64,7 +64,11 @@ export default function Chart() {
     // 每次路径 code 变化时更新 symbol
     useEffect(() => {
         if (code) {
-            setSymbol({ ticker: code, name: code });
+            getStockInfo(code).then((stockInfo) => {
+                if (stockInfo) {
+                    setSymbol(stockInfo);
+                }
+            })
         }
     }, [code]);
 
