@@ -159,8 +159,8 @@ export default function Chart() {
                                             {displayOHLC && (
                                                 <span className="text-sm text-slate-600 ml-4">
                                                     O: <span className="font-medium">{displayOHLC.open.toFixed(2)}</span>
-                                                    {' '}H: <span className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
                                                     {' '}L: <span className="font-medium text-rose-600">{displayOHLC.low.toFixed(2)}</span>
+                                                    {' '}H: <span className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
                                                     {' '}C: <span className={`font-medium ${displayOHLC.close >= displayOHLC.open ? 'text-emerald-600' : 'text-rose-600'}`}>{displayOHLC.close.toFixed(2)}</span>
                                                 </span>
                                             )}
