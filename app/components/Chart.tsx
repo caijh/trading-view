@@ -95,13 +95,13 @@ export default function Chart() {
             if (json.code === 0 && json.data) {
                 setSymbol({ ticker: json.data.code, name: json.data.name });
             } else {
-                toast('Stock not found.')
+                toast.error('Stock not found.')
             }
             // 查询不到信息时不调用 setSymbol
         } catch (e) {
             // 请求异常时同样不调用 setSymbol
             console.error("Failed to fetch stock info:", e);
-            toast('Failed to fetch stock info.')
+            toast.error('Failed to fetch stock info.')
         }
 
         setShowSymbolInput(false);
