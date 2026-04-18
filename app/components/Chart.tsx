@@ -12,7 +12,7 @@ export default function Chart() {
 
     const [symbol, setSymbol] = useState<{ ticker: string; name: string }>({
         ticker: code || "SPX.NS",
-        name: "",
+        name: code || '标普500指数',
     });
 
     const [showModal, setShowModal] = useState(false);
@@ -81,30 +81,38 @@ export default function Chart() {
         setShowSymbolInput(true);
     };
 
-    const submitSymbol = async () => {
-        const trimmed = inputValue.trim();
-        if (!trimmed) {
-            setShowSymbolInput(false);
-            return;
-        }
-
+    const getStockInfo = async (code: string)=> {
         try {
-            const res = await fetch(`/api/trading-data/stock?code=${encodeURIComponent(trimmed)}`);
-            const json = await res.json();
+            const res = await fetch(`/api/trading-data/stock?code=${encodeURIComponent(code)}`);
+            const json = await res.json()
 
             if (json.code === 0 && json.data) {
-                setSymbol({ ticker: json.data.code, name: json.data.name });
+                let code: string = json.data.code
+                let name: string = json.data.name
+                return { ticker: code, name: name }
             } else {
                 toast.error('Stock not found.')
             }
-            // 查询不到信息时不调用 setSymbol
         } catch (e) {
             // 请求异常时同样不调用 setSymbol
-            console.error("Failed to fetch stock info:", e);
+            console.error("Failed to fetch stock info:", e)
             toast.error('Failed to fetch stock info.')
         }
+        return null
+    }
 
-        setShowSymbolInput(false);
+    const submitSymbol = async () => {
+        const trimmed = inputValue.trim()
+        if (!trimmed) {
+            setShowSymbolInput(false)
+            return;
+        }
+
+        let stockInfo = await getStockInfo(trimmed)
+        if (stockInfo) {
+            setSymbol(stockInfo)
+            setShowSymbolInput(false)
+        }
     };
 
     const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
