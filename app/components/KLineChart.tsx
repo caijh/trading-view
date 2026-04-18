@@ -22,6 +22,15 @@ import enUS from 'date-fns/locale/en-US'
 import zhCN from 'date-fns/locale/zh-CN'
 import toast from "react-hot-toast";
 
+// ── 共享 OHLC 类型，含前收盘价 ───────────────────────────────────────────────
+export type OHLCWithPrevClose = {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    prevClose: number; // 前一交易日收盘价，用于计算涨跌幅
+};
+
 // Utility function to sync time scales of multiple charts
 const syncCharts = (charts: IChartApi[]) => {
     if (charts.length < 2) return;
@@ -91,8 +100,8 @@ const REALTIME_POLL_INTERVAL = 30_000; // 30 秒
 export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMoveAction, onLatestOHLCAction }: {
     symbol: string,
     onAnalysisDataAction: (data: any) => void,
-    onCrosshairMoveAction?: (data: { open: number; high: number; low: number; close: number } | null) => void,
-    onLatestOHLCAction?: (data: { open: number; high: number; low: number; close: number } | null) => void
+    onCrosshairMoveAction?: (data: OHLCWithPrevClose | null) => void,
+    onLatestOHLCAction?: (data: OHLCWithPrevClose | null) => void
 }) {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const volumeContainerRef = useRef<HTMLDivElement | null>(null);
@@ -111,6 +120,9 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
     const sma20SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
 
     const klineDataRef = useRef<OhlcData[]>([]);
+
+    // 记录最新实时 K 线对应的前收盘价（即历史末根的 close）
+    const prevCloseRef = useRef<number>(0);
 
     // 实时轮询的 timer ref，symbol 切换或闭市时清除
     const realtimeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -175,11 +187,18 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 onCrosshairMoveRef.current?.(null);
                 return;
             }
-            const dataPoint = klineDataRef.current.find(d => d.time === param.time);
-            if (dataPoint) {
+            const data = klineDataRef.current;
+            const idx = data.findIndex(d => d.time === param.time);
+            if (idx >= 0) {
+                const dataPoint = data[idx];
+                // 前收：有前一根就用它的 close，否则用当根 open 近似
+                const prevClose = idx > 0 ? data[idx - 1].close : dataPoint.open;
                 onCrosshairMoveRef.current?.({
-                    open: dataPoint.open, high: dataPoint.high,
-                    low: dataPoint.low, close: dataPoint.close,
+                    open: dataPoint.open,
+                    high: dataPoint.high,
+                    low: dataPoint.low,
+                    close: dataPoint.close,
+                    prevClose,
                 });
             } else {
                 onCrosshairMoveRef.current?.(null);
@@ -277,10 +296,13 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 sma20SeriesRef.current.update({ time: ts, value: sum / 20 } as any);
             }
 
-            // ── 通知父组件最新 OHLC ──────────────────────────────────────────────
+            // ── 通知父组件最新 OHLC（含前收盘价）────────────────────────────────
             onLatestOHLCRef.current?.({
-                open: updatedCandle.open, high: updatedCandle.high,
-                low: updatedCandle.low, close: updatedCandle.close,
+                open: updatedCandle.open,
+                high: updatedCandle.high,
+                low: updatedCandle.low,
+                close: updatedCandle.close,
+                prevClose: prevCloseRef.current,
             });
         };
 
@@ -350,6 +372,11 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 volumeSeriesRef.current?.setData(volumeData);
                 klineDataRef.current = klineData;
 
+                // ── 记录最新实时 K 线的前收盘价（历史倒数第二根的 close）──────────
+                prevCloseRef.current = klineData.length >= 2
+                    ? klineData[klineData.length - 2].close
+                    : 0;
+
                 // EMA5
                 const eam5Data = calculateEMA(klineData, 5);
                 if (!eam5SeriesRef.current) {
@@ -371,11 +398,14 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 mainChartRef.current?.timeScale().fitContent();
                 volumeChartRef.current?.timeScale().fitContent();
 
-                // 通知父组件最新静态 OHLC
+                // ── 通知父组件最新静态 OHLC（含前收盘价）────────────────────────
                 const latestData = klineData[klineData.length - 1];
                 onLatestOHLCRef.current?.({
-                    open: latestData.open, high: latestData.high,
-                    low: latestData.low, close: latestData.close,
+                    open: latestData.open,
+                    high: latestData.high,
+                    low: latestData.low,
+                    close: latestData.close,
+                    prevClose: prevCloseRef.current,
                 });
 
                 // ── 检查市场状态，决定是否开启实时轮询 ──────────────────────

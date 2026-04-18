@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import KLineChart from "@/app/components/KLineChart";
+import KLineChart, { OHLCWithPrevClose } from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -27,35 +27,37 @@ export default function Chart() {
 
         switch (value.toUpperCase()) {
             case 'UP':
-                return (
-                    <img src="/shangzhang.svg" alt="UP" className="h-5 w-5" />
-                );
+                return <img src="/shangzhang.svg" alt="UP" className="h-5 w-5" />;
             case 'DOWN':
-                return (
-                    <img src="/xiadie.svg" alt="DOWN" className="h-5 w-5" />
-                );
+                return <img src="/xiadie.svg" alt="DOWN" className="h-5 w-5" />;
             case 'SIDE':
             default:
-                return (
-                    <img src="/heng.svg" alt="SIDE" className="h-5 w-5" />
-                );
+                return <img src="/heng.svg" alt="SIDE" className="h-5 w-5" />;
         }
     };
 
-    // State for OHLC data when hovering over chart
-    const [ohlcData, setOhlcData] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
-    const [latestOHLC, setLatestOHLC] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
+    // ── OHLC 状态（含前收盘价）────────────────────────────────────────────────
+    const [ohlcData, setOhlcData] = useState<OHLCWithPrevClose | null>(null);
+    const [latestOHLC, setLatestOHLC] = useState<OHLCWithPrevClose | null>(null);
 
-    const handleCrosshairMove = (data: { open: number; high: number; low: number; close: number } | null) => {
+    const handleCrosshairMove = (data: OHLCWithPrevClose | null) => {
         setOhlcData(data);
     };
 
-    const handleLatestOHLC = (data: { open: number; high: number; low: number; close: number } | null) => {
+    const handleLatestOHLC = (data: OHLCWithPrevClose | null) => {
         setLatestOHLC(data);
     };
 
-    // Use crosshair data if available, otherwise use latest OHLC
+    // 鼠标悬停时优先展示悬停数据，否则展示最新 OHLC
     const displayOHLC = ohlcData || latestOHLC;
+
+    // ── 涨跌幅计算工具 ────────────────────────────────────────────────────────
+    const calcChange = (ohlc: OHLCWithPrevClose) => {
+        if (!ohlc.prevClose || ohlc.prevClose === 0) return null;
+        const change = ohlc.close - ohlc.prevClose;
+        const pct = (change / ohlc.prevClose) * 100;
+        return { change, pct };
+    };
 
     const [showSymbolInput, setShowSymbolInput] = useState(false);
     const [inputValue, setInputValue] = useState(symbol.ticker);
@@ -68,7 +70,7 @@ export default function Chart() {
                 if (stockInfo) {
                     setSymbol(stockInfo);
                 }
-            })
+            });
         }
     }, [code]);
 
@@ -85,37 +87,34 @@ export default function Chart() {
         setShowSymbolInput(true);
     };
 
-    const getStockInfo = async (code: string)=> {
+    const getStockInfo = async (code: string) => {
         try {
             const res = await fetch(`/api/trading-data/stock?code=${encodeURIComponent(code)}`);
-            const json = await res.json()
+            const json = await res.json();
 
             if (json.code === 0 && json.data) {
-                let code: string = json.data.code
-                let name: string = json.data.name
-                return { ticker: code, name: name }
+                return { ticker: json.data.code as string, name: json.data.name as string };
             } else {
-                toast.error('Stock not found.')
+                toast.error('Stock not found.');
             }
         } catch (e) {
-            // 请求异常时同样不调用 setSymbol
-            console.error("Failed to fetch stock info:", e)
-            toast.error('Failed to fetch stock info.')
+            console.error("Failed to fetch stock info:", e);
+            toast.error('Failed to fetch stock info.');
         }
-        return null
-    }
+        return null;
+    };
 
     const submitSymbol = async () => {
-        const trimmed = inputValue.trim()
+        const trimmed = inputValue.trim();
         if (!trimmed) {
-            setShowSymbolInput(false)
+            setShowSymbolInput(false);
             return;
         }
 
-        let stockInfo = await getStockInfo(trimmed)
+        const stockInfo = await getStockInfo(trimmed);
         if (stockInfo) {
-            setSymbol(stockInfo)
-            setShowSymbolInput(false)
+            setSymbol(stockInfo);
+            setShowSymbolInput(false);
         }
     };
 
@@ -141,34 +140,59 @@ export default function Chart() {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <div className="text-sm text-slate-500">Symbol</div>
-                                            <button
-                                                className="text-slate-600 hover:text-slate-800 p-1 rounded"
-                                                onClick={openSymbolInput}
-                                                title="Search symbol"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z" />
-                                                </svg>
-                                            </button>
+                                        <button
+                                            className="text-slate-600 hover:text-slate-800 p-1 rounded"
+                                            onClick={openSymbolInput}
+                                            title="Search symbol"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z" />
+                                            </svg>
+                                        </button>
                                     </div>
+
                                     <div className="text-lg font-medium">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <span>{symbol.ticker} — {symbol.name}</span>
 
-                                            {/* OHLC Display - positioned next to symbol name */}
-                                            {displayOHLC && (
-                                                <span className="text-sm text-slate-600 ml-4">
-                                                    O: <span className="font-medium">{displayOHLC.open.toFixed(2)}</span>
-                                                    {' '}L: <span className="font-medium text-rose-600">{displayOHLC.low.toFixed(2)}</span>
-                                                    {' '}H: <span className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
-                                                    {' '}C: <span className={`font-medium ${displayOHLC.close >= displayOHLC.open ? 'text-emerald-600' : 'text-rose-600'}`}>{displayOHLC.close.toFixed(2)}</span>
-                                                </span>
-                                            )}
+                                            {/* ── OHLC + 涨跌幅展示 ──────────────────────────────── */}
+                                            {displayOHLC && (() => {
+                                                const result = calcChange(displayOHLC);
+                                                const closeUp = displayOHLC.close >= displayOHLC.open;
+                                                const changeUp = result ? result.change >= 0 : null;
 
-                                            {/* popup input will be shown as a modal overlay instead of inline */}
+                                                return (
+                                                    <span className="text-sm text-slate-600 ml-4 flex items-center gap-1 flex-wrap">
+                                                        <span>
+                                                            O: <span className="font-medium">{displayOHLC.open.toFixed(2)}</span>
+                                                        </span>
+                                                        <span>
+                                                            L: <span className="font-medium text-rose-600">{displayOHLC.low.toFixed(2)}</span>
+                                                        </span>
+                                                        <span>
+                                                            H: <span className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
+                                                        </span>
+                                                        <span>
+                                                            C: <span className={`font-medium ${closeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                {displayOHLC.close.toFixed(2)}
+                                                            </span>
+                                                        </span>
+
+                                                        {/* 涨跌幅 */}
+                                                        {result && (
+                                                            <span className={`font-semibold ml-1 ${changeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                {changeUp ? '▲' : '▼'}
+                                                                {' '}{Math.abs(result.change).toFixed(2)}
+                                                                {' '}({changeUp ? '+' : '-'}{Math.abs(result.pct).toFixed(2)}%)
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
+
                                 <div className="flex items-center gap-2">
                                     {/* Icon button for displaying the analysis modal */}
                                     <button
@@ -176,9 +200,8 @@ export default function Chart() {
                                         onClick={() => setShowModal(!showModal)}
                                         title="View Analysis"
                                     >
-                                        <i className="fas fa-chart-line"></i> {/* Font Awesome chart icon */}
+                                        <i className="fas fa-chart-line"></i>
                                     </button>
-
                                     <div className="text-sm text-slate-500">1D</div>
                                 </div>
                             </div>
@@ -227,6 +250,7 @@ export default function Chart() {
                         <StockList onSelectAction={(s) => setSymbol(s)} />
                     </aside>
                 </main>
+
                 {/* Modal to display analysis data */}
                 {showModal && analysisData && (
                     <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10">
@@ -278,7 +302,7 @@ export default function Chart() {
                             onClick={() => setShowModal(false)}
                             title="Close"
                         >
-                            <i className="fas fa-times"></i> {/* Font Awesome close icon */}
+                            <i className="fas fa-times"></i>
                         </button>
                     </div>
                 )}
