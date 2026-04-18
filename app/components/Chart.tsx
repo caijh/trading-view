@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import KLineChart from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Chart() {
     const searchParams = useSearchParams();
@@ -23,7 +24,7 @@ export default function Chart() {
     // Helper function to determine arrow icon and color based on trend/direction value
     const renderTrendIcon = (value: string) => {
         if (!value) return null;
-        
+
         switch (value.toUpperCase()) {
             case 'UP':
                 return (
@@ -80,17 +81,35 @@ export default function Chart() {
         setShowSymbolInput(true);
     };
 
-    const submitSymbol = () => {
+    const submitSymbol = async () => {
         const trimmed = inputValue.trim();
-        if (trimmed) {
-            setSymbol({ ticker: trimmed, name: trimmed });
+        if (!trimmed) {
+            setShowSymbolInput(false);
+            return;
         }
+
+        try {
+            const res = await fetch(`/api/trading-data/stock?code=${encodeURIComponent(trimmed)}`);
+            const json = await res.json();
+
+            if (json.code === 0 && json.data) {
+                setSymbol({ ticker: json.data.code, name: json.data.name });
+            } else {
+                toast('Stock not found.')
+            }
+            // 查询不到信息时不调用 setSymbol
+        } catch (e) {
+            // 请求异常时同样不调用 setSymbol
+            console.error("Failed to fetch stock info:", e);
+            toast('Failed to fetch stock info.')
+        }
+
         setShowSymbolInput(false);
     };
 
     const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
-            submitSymbol();
+            submitSymbol().then();
         } else if (e.key === "Escape") {
             setShowSymbolInput(false);
         }
@@ -98,6 +117,7 @@ export default function Chart() {
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-slate-50 text-slate-900">
+            <Toaster />
             <div className="mx-auto p-4">
                 <header className="mb-4 flex items-center justify-between" />
 
