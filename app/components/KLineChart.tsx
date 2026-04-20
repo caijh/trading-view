@@ -296,6 +296,9 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 sma20SeriesRef.current.update({ time: ts, value: sum / 20 } as any);
             }
 
+            prevCloseRef.current = latestKline.length >= 2
+                ? latestKline[latestKline.length - 2].close
+                : 0;
             // ── 通知父组件最新 OHLC（含前收盘价）────────────────────────────────
             onLatestOHLCRef.current?.({
                 open: updatedCandle.open,
