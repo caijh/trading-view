@@ -290,9 +290,9 @@ export default function Chart() {
                             <div className="flex justify-between">
                                 <div><strong>Patterns:</strong></div>
                                 <div>
-                                    {Array.isArray(analysisData.patterns)
+                                    {Array.isArray(analysisData.patterns) && analysisData.patterns.length > 0
                                         ? analysisData.patterns.join(", ")
-                                        : "No patterns available"}
+                                        : "--"}
                                 </div>
                             </div>
                         </div>
