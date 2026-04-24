@@ -382,7 +382,7 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                                         </div>
                                     </div>
                                     <div className="text-xs text-slate-400 mt-1">
-                                        · {s.ticker.split('.').pop()?.toUpperCase() || 'N/A'} {s.strategy_name} {s.name}
+                                        · {s.strategy_name} {s.name}
                                     </div>
                                 </div>
                                 <div className="text-right space-y-1">
