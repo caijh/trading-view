@@ -27,12 +27,12 @@ export default function Chart() {
 
         switch (value.toUpperCase()) {
             case 'UP':
-                return <img src="/shangzhang.svg" alt="UP" className="h-5 w-5" />;
+                return <img src="/shangzhang.svg" alt="UP" className="h-5 w-5"/>;
             case 'DOWN':
-                return <img src="/xiadie.svg" alt="DOWN" className="h-5 w-5" />;
+                return <img src="/xiadie.svg" alt="DOWN" className="h-5 w-5"/>;
             case 'SIDE':
             default:
-                return <img src="/heng.svg" alt="SIDE" className="h-5 w-5" />;
+                return <img src="/heng.svg" alt="SIDE" className="h-5 w-5"/>;
         }
     };
 
@@ -56,7 +56,7 @@ export default function Chart() {
         if (!ohlc.prevClose || ohlc.prevClose === 0) return null;
         const change = ohlc.close - ohlc.prevClose;
         const pct = (change / ohlc.prevClose) * 100;
-        return { change, pct };
+        return {change, pct};
     };
 
     const [showSymbolInput, setShowSymbolInput] = useState(false);
@@ -93,7 +93,7 @@ export default function Chart() {
             const json = await res.json();
 
             if (json.code === 0 && json.data) {
-                return { ticker: json.data.code as string, name: json.data.name as string };
+                return {ticker: json.data.code as string, name: json.data.name as string};
             } else {
                 toast.error('Stock not found.');
             }
@@ -128,9 +128,9 @@ export default function Chart() {
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-slate-50 text-slate-900">
-            <Toaster />
+            <Toaster/>
             <div className="mx-auto p-4">
-                <header className="mb-4 flex items-center justify-between" />
+                <header className="mb-4 flex items-center justify-between"/>
 
                 <main className="grid grid-cols-12 gap-2 h-[calc(100vh-64px)]">
                     {/* left: chart area */}
@@ -145,8 +145,10 @@ export default function Chart() {
                                             onClick={openSymbolInput}
                                             title="Search symbol"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none"
+                                                 viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z"/>
                                             </svg>
                                         </button>
                                     </div>
@@ -162,25 +164,31 @@ export default function Chart() {
                                                 const changeUp = result ? result.change >= 0 : null;
 
                                                 return (
-                                                    <span className="text-sm text-slate-600 ml-4 flex items-center gap-1 flex-wrap">
+                                                    <span
+                                                        className="text-sm text-slate-600 ml-4 flex items-center gap-1 flex-wrap">
                                                         <span>
-                                                            O: <span className="font-medium">{displayOHLC.open.toFixed(2)}</span>
+                                                            O: <span
+                                                            className="font-medium">{displayOHLC.open.toFixed(2)}</span>
                                                         </span>
                                                         <span>
-                                                            L: <span className="font-medium text-rose-600">{displayOHLC.low.toFixed(2)}</span>
+                                                            L: <span
+                                                            className="font-medium text-rose-600">{displayOHLC.low.toFixed(2)}</span>
                                                         </span>
                                                         <span>
-                                                            H: <span className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
+                                                            H: <span
+                                                            className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
                                                         </span>
                                                         <span>
-                                                            C: <span className={`font-medium ${closeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                            C: <span
+                                                            className={`font-medium ${closeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                                 {displayOHLC.close.toFixed(2)}
                                                             </span>
                                                         </span>
 
                                                         {/* 涨跌幅 */}
                                                         {result && (
-                                                            <span className={`font-semibold ml-1 ${changeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                            <span
+                                                                className={`font-semibold ml-1 ${changeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                                 {changeUp ? '▲' : '▼'}
                                                                 {' '}{Math.abs(result.change).toFixed(2)}
                                                                 {' '}({changeUp ? '+' : '-'}{Math.abs(result.pct).toFixed(2)}%)
@@ -219,7 +227,8 @@ export default function Chart() {
 
                     {/* Symbol search modal overlay */}
                     {showSymbolInput && (
-                        <div className="fixed inset-0 z-20 flex items-center justify-center bg-transparent backdrop-blur-sm">
+                        <div
+                            className="fixed inset-0 z-20 flex items-center justify-center bg-transparent backdrop-blur-sm">
                             <div className="bg-white p-4 rounded shadow-lg w-[320px]">
                                 <div className="mb-2 text-sm font-medium">Search Symbol</div>
                                 <div className="flex gap-2">
@@ -239,7 +248,9 @@ export default function Chart() {
                                     </button>
                                 </div>
                                 <div className="mt-2 text-right">
-                                    <button className="text-sm text-slate-600" onClick={() => setShowSymbolInput(false)}>Cancel</button>
+                                    <button className="text-sm text-slate-600"
+                                            onClick={() => setShowSymbolInput(false)}>Cancel
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -247,13 +258,14 @@ export default function Chart() {
 
                     {/* right: stock list */}
                     <aside className="col-span-3 h-full overflow-y-auto">
-                        <StockList onSelectAction={(s) => setSymbol(s)} />
+                        <StockList onSelectAction={(s) => setSymbol(s)}/>
                     </aside>
                 </main>
 
                 {/* Modal to display analysis data */}
                 {showModal && analysisData && (
-                    <div className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10">
+                    <div
+                        className="absolute left-1/2 transform -translate-x-1/2 top-16 bg-white p-4 rounded-lg shadow-lg z-10">
                         <div className="space-y-2 text-left">
                             <div className="flex justify-between items-center">
                                 <div><strong>Trending:</strong></div>
@@ -295,6 +307,51 @@ export default function Chart() {
                                         : "--"}
                                 </div>
                             </div>
+
+                            {/* Strategy */}
+                            {analysisData.strategy && (
+                                <>
+                                    <div className="border-t pt-2 mt-2">
+                                        <strong>Strategy</strong>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Type:</strong></div>
+                                        <div>{analysisData.strategy.strategy_type ?? "--"}</div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Signal:</strong></div>
+                                        <div>{analysisData.strategy.signal ?? "--"}</div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Entry Price:</strong></div>
+                                        <div>{analysisData.strategy.entry_price ?? "--"}</div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Take Profit:</strong></div>
+                                        <div>{analysisData.strategy.take_profit ?? "--"}</div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Stop Loss:</strong></div>
+                                        <div>{analysisData.strategy.stop_loss ?? "--"}</div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Entry Patterns:</strong></div>
+                                        <div>
+                                            {Array.isArray(analysisData.strategy.entry_patterns) && analysisData.strategy.entry_patterns.length > 0
+                                                ? analysisData.strategy.entry_patterns.join(", ")
+                                                : "--"}
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div><strong>Exit Patterns:</strong></div>
+                                        <div>
+                                            {Array.isArray(analysisData.strategy.exit_patterns) && analysisData.strategy.exit_patterns.length > 0
+                                                ? analysisData.strategy.exit_patterns.join(", ")
+                                                : "--"}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         {/* Close button */}
                         <button
