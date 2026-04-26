@@ -319,6 +319,10 @@ export default function Chart() {
                                         <div>{analysisData.strategy.strategy_type ?? "--"}</div>
                                     </div>
                                     <div className="flex justify-between">
+                                        <div><strong>Name:</strong></div>
+                                        <div>{analysisData.strategy.strategy_name ?? "--"}</div>
+                                    </div>
+                                    <div className="flex justify-between">
                                         <div><strong>Signal:</strong></div>
                                         <div>{analysisData.strategy.signal ?? "--"}</div>
                                     </div>
