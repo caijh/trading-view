@@ -168,20 +168,20 @@ export default function Chart() {
                                                         className="text-sm text-slate-600 ml-4 flex items-center gap-1 flex-wrap">
                                                         <span>
                                                             O: <span
-                                                            className="font-medium">{displayOHLC.open.toFixed(2)}</span>
+                                                            className="font-medium">{displayOHLC.open.toFixed(3)}</span>
                                                         </span>
                                                         <span>
                                                             L: <span
-                                                            className="font-medium text-rose-600">{displayOHLC.low.toFixed(2)}</span>
+                                                            className="font-medium text-rose-600">{displayOHLC.low.toFixed(3)}</span>
                                                         </span>
                                                         <span>
                                                             H: <span
-                                                            className="font-medium text-emerald-600">{displayOHLC.high.toFixed(2)}</span>
+                                                            className="font-medium text-emerald-600">{displayOHLC.high.toFixed(3)}</span>
                                                         </span>
                                                         <span>
                                                             C: <span
                                                             className={`font-medium ${closeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                                {displayOHLC.close.toFixed(2)}
+                                                                {displayOHLC.close.toFixed(3)}
                                                             </span>
                                                         </span>
 
