@@ -84,6 +84,22 @@ const calculateSMA = (data: OhlcData[], period: number): OhlcData[] => {
     return sma;
 };
 
+// 从 K 线数据中自动检测价格精度（小数位数），最少 2 位
+const detectPrecision = (data: OhlcData[]): number => {
+    let maxDecimals = 2;
+    const sample = data.slice(-20); // 取最近 20 根即可
+    for (const d of sample) {
+        for (const val of [d.open, d.high, d.low, d.close]) {
+            const str = val.toString();
+            const dotIdx = str.indexOf('.');
+            if (dotIdx >= 0) {
+                maxDecimals = Math.max(maxDecimals, str.length - dotIdx - 1);
+            }
+        }
+    }
+    return maxDecimals;
+};
+
 const getTime = (symbol: string, datetime_str: string, format_str: string): UTCTimestamp => {
     let locale = enUS;
     if (symbol.endsWith('.SH') || symbol.endsWith('.SZ') || symbol.endsWith('.HK')) {
@@ -370,6 +386,13 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 }));
 
                 clearOverlays();
+
+                // 自动检测价格精度并应用到 K 线刻度（修复基金等小数位数不足的问题）
+                const precision = detectPrecision(klineData);
+                const minMove = parseFloat((Math.pow(10, -precision)).toFixed(precision));
+                candleSeriesRef.current?.applyOptions({
+                    priceFormat: { type: 'price', precision, minMove },
+                });
 
                 candleSeriesRef.current?.setData(klineData);
                 volumeSeriesRef.current?.setData(volumeData);
