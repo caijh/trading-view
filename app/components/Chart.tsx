@@ -190,7 +190,7 @@ export default function Chart() {
                                                             <span
                                                                 className={`font-semibold ml-1 ${changeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                                 {changeUp ? '▲' : '▼'}
-                                                                {' '}{Math.abs(result.change).toFixed(2)}
+                                                                {' '}{Math.abs(result.change).toFixed(3)}
                                                                 {' '}({changeUp ? '+' : '-'}{Math.abs(result.pct).toFixed(2)}%)
                                                             </span>
                                                         )}
