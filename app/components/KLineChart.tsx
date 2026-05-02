@@ -31,18 +31,6 @@ export type OHLCWithPrevClose = {
     prevClose: number; // 前一交易日收盘价，用于计算涨跌幅
 };
 
-// Utility function to sync time scales of multiple charts
-const syncCharts = (charts: IChartApi[]) => {
-    if (charts.length < 2) return;
-    const [mainChart, ...otherCharts] = charts;
-
-    mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-        if (range) {
-            otherCharts.forEach(chart => chart.timeScale().setVisibleLogicalRange(range));
-        }
-    });
-};
-
 // 查找时间正好等于 targetTime 的 K线点
 const findClosestPoint = (data: OhlcData[], targetTime: number): OhlcData | null => {
     if (!data.length) return null;
@@ -119,11 +107,9 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
     onCrosshairMoveAction?: (data: OHLCWithPrevClose | null) => void,
     onLatestOHLCAction?: (data: OHLCWithPrevClose | null) => void
 }) {
+    // ── 只需一个容器、一个 chart 实例 ────────────────────────────────────────
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
-    const volumeContainerRef = useRef<HTMLDivElement | null>(null);
-
     const mainChartRef = useRef<IChartApi | null>(null);
-    const volumeChartRef = useRef<IChartApi | null>(null);
 
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
     const candleSeriesMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
@@ -154,14 +140,18 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
     // ─── 初始化图表（只执行一次）────────────────────────────────────────────
     useEffect(() => {
-        if (!chartContainerRef.current || !volumeContainerRef.current) return;
+        if (!chartContainerRef.current) return;
 
+        // ── 单一 chart，K线与 Volume 共享同一个视图 ──────────────────────────
         const mainChart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
-            height: window.innerHeight - 500,
+            height: window.innerHeight - 200,  // 整体更高，因为 volume 合并进来了
             layout: { background: { color: "#ffffff" }, textColor: "#0f172a" },
             rightPriceScale: { borderVisible: false },
-            timeScale: { visible: false },
+            timeScale: {
+                borderVisible: false,
+                timeVisible: true,  // 合并后时间轴在这里显示
+            },
             crosshair: {
                 mode: 1,
                 vertLine: { visible: true, labelVisible: true },
@@ -171,6 +161,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         mainChart.applyOptions({ localization: { locale, dateFormat: 'yyyy-MM-dd' } });
         mainChartRef.current = mainChart;
 
+        // ── K 线系列 ──────────────────────────────────────────────────────────
         candleSeriesRef.current = mainChart.addSeries(CandlestickSeries, {
             upColor: "#16a34a",
             downColor: "#ef4444",
@@ -180,24 +171,23 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         });
         candleSeriesMarkersRef.current = createSeriesMarkers(candleSeriesRef.current, []);
 
-        const volumeChart = createChart(volumeContainerRef.current, {
-            width: volumeContainerRef.current.clientWidth,
-            height: 300,
-            layout: { background: { color: "#ffffff" }, textColor: "#0f172a" },
-            rightPriceScale: { borderVisible: false },
-            timeScale: { borderVisible: false, timeVisible: true },
-        });
-        volumeChart.applyOptions({ localization: { locale, dateFormat: 'yyyy-MM-dd' } });
-        volumeChartRef.current = volumeChart;
-
-        volumeSeriesRef.current = volumeChart.addSeries(HistogramSeries, {
+        // ── Volume 系列：加到同一个 mainChart，独立 priceScaleId ──────────────
+        volumeSeriesRef.current = mainChart.addSeries(HistogramSeries, {
             color: "#26a69a",
             priceFormat: { type: "volume" },
-            priceScaleId: "volume",
+            priceScaleId: "volume",   // 独立价格轴，不与 K 线共用刻度
         });
 
-        syncCharts([mainChart, volumeChart]);
+        // Volume 价格轴的 scaleMargins：top:0.8 意味着 volume 只占底部 20%
+        // K 线自然占据上方 80%，与 TradingView 默认布局一致
+        mainChart.priceScale("volume").applyOptions({
+            scaleMargins: {
+                top: 0.8,    // ← 调节这个值可改变 volume 区域的高度比例
+                bottom: 0,
+            },
+        });
 
+        // ── Crosshair ─────────────────────────────────────────────────────────
         mainChart.subscribeCrosshairMove(param => {
             if (!param.point || !param.time) {
                 onCrosshairMoveRef.current?.(null);
@@ -207,7 +197,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
             const idx = data.findIndex(d => d.time === param.time);
             if (idx >= 0) {
                 const dataPoint = data[idx];
-                // 前收：有前一根就用它的 close，否则用当根 open 近似
                 const prevClose = idx > 0 ? data[idx - 1].close : dataPoint.open;
                 onCrosshairMoveRef.current?.({
                     open: dataPoint.open,
@@ -221,10 +210,10 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
             }
         });
 
+        // ── Resize ────────────────────────────────────────────────────────────
         const handleResize = () => {
-            if (chartContainerRef.current && volumeContainerRef.current) {
+            if (chartContainerRef.current) {
                 mainChart.applyOptions({ width: chartContainerRef.current.clientWidth });
-                volumeChart.applyOptions({ width: volumeContainerRef.current.clientWidth });
             }
         };
         window.addEventListener("resize", handleResize);
@@ -236,9 +225,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 trendLinesRef.current = [];
             } catch { }
             mainChart.remove();
-            volumeChart.remove();
             mainChartRef.current = null;
-            volumeChartRef.current = null;
         };
     }, []);
 
@@ -299,14 +286,12 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
             // ── 更新均线（只 update 最新一个点，不做全量 setData）────────────────
             const latestKline = klineDataRef.current;
 
-            // EMA5：k 值 = 2/(5+1)，从头迭代拿到最新 EMA 值
             if (eam5SeriesRef.current && latestKline.length >= 1) {
                 const ema5All = calculateEMA(latestKline, 5);
                 const last = ema5All[ema5All.length - 1];
                 if (last) eam5SeriesRef.current.update(last as any);
             }
 
-            // SMA20：只需最近 20 根收盘价均值
             if (sma20SeriesRef.current && latestKline.length >= 20) {
                 const sum = latestKline.slice(-20).reduce((acc, d) => acc + d.close, 0);
                 sma20SeriesRef.current.update({ time: ts, value: sum / 20 } as any);
@@ -315,7 +300,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
             prevCloseRef.current = latestKline.length >= 2
                 ? latestKline[latestKline.length - 2].close
                 : 0;
-            // ── 通知父组件最新 OHLC（含前收盘价）────────────────────────────────
+
             onLatestOHLCRef.current?.({
                 open: updatedCandle.open,
                 high: updatedCandle.high,
@@ -327,13 +312,11 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
         // ── 启动实时轮询 ────────────────────────────────────────────────────
         const startRealtimePolling = () => {
-            // 立即拉一次
             fetchRealtimePrice().then(r => {});
             realtimeTimerRef.current = setInterval(fetchRealtimePrice, REALTIME_POLL_INTERVAL);
         };
 
         const fetchRealtimePrice = async () => {
-            // 组件已卸载或 symbol 已切换则停止
             if (signal.aborted) {
                 if (realtimeTimerRef.current) {
                     clearInterval(realtimeTimerRef.current);
@@ -352,7 +335,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     }
                 }
             } catch {
-                // 网络抖动静默处理，下次 interval 继续
+                // 网络抖动静默处理
             }
         };
 
@@ -387,7 +370,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                 clearOverlays();
 
-                // 自动检测价格精度并应用到 K 线刻度（修复基金等小数位数不足的问题）
                 const precision = detectPrecision(klineData);
                 const minMove = parseFloat((Math.pow(10, -precision)).toFixed(precision));
                 candleSeriesRef.current?.applyOptions({
@@ -398,7 +380,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 volumeSeriesRef.current?.setData(volumeData);
                 klineDataRef.current = klineData;
 
-                // ── 记录最新实时 K 线的前收盘价（历史倒数第二根的 close）──────────
                 prevCloseRef.current = klineData.length >= 2
                     ? klineData[klineData.length - 2].close
                     : 0;
@@ -422,9 +403,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 sma20SeriesRef.current?.setData(sma20Data);
 
                 mainChartRef.current?.timeScale().fitContent();
-                volumeChartRef.current?.timeScale().fitContent();
 
-                // ── 通知父组件最新静态 OHLC（含前收盘价）────────────────────────
                 const latestData = klineData[klineData.length - 1];
                 onLatestOHLCRef.current?.({
                     open: latestData.open,
@@ -440,7 +419,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                 if (statusRes.ok) {
                     const statusJson = await statusRes.json();
-                    // data 为 "MarketOpen" 或其他非 "MarketClosed" 字符串视为开市
                     const isOpen = statusJson.code === 0 && statusJson.data !== "MarketClosed";
                     if (isOpen) {
                         startRealtimePolling();
@@ -460,7 +438,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     const info = analysisJson.data;
                     onAnalysisDataAction(info);
 
-                    // 支撑线
                     if (info.support) {
                         try {
                             const pl = candleSeriesRef.current?.createPriceLine({
@@ -471,7 +448,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         } catch { }
                     }
 
-                    // 阻力线
                     if (info.resistance) {
                         try {
                             const pl = candleSeriesRef.current?.createPriceLine({
@@ -482,7 +458,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         } catch { }
                     }
 
-                    // 向上转折点（蓝线）
                     if (info.turning_up_point_1 && info.turning_up_point_2) {
                         const up2 = getTime(symbol, info.turning_up_point_1, 'yyyy-MM-dd HH:mm:ss');
                         const up1 = getTime(symbol, info.turning_up_point_2, 'yyyy-MM-dd HH:mm:ss');
@@ -507,7 +482,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         }
                     }
 
-                    // 向下转折点（橙线）
                     if (info.turning_down_point_1 && info.turning_down_point_2) {
                         const dn2 = getTime(symbol, info.turning_down_point_1, 'yyyy-MM-dd HH:mm:ss');
                         const dn1 = getTime(symbol, info.turning_down_point_2, 'yyyy-MM-dd HH:mm:ss');
@@ -534,7 +508,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
                     const markers: SeriesMarker<UTCTimestamp>[] = [];
 
-                    // 转折点数组
                     if (info.turning && Array.isArray(info.turning) && info.turning.length > 1) {
                         const turningPoints = info.turning
                             .map((item: { time: string; type: number }) => {
@@ -566,7 +539,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         }
                     }
 
-                    // K 线形态 Markers
                     if (info.candlestick_patterns && Array.isArray(info.candlestick_patterns)) {
                         const markerMap = new Map<UTCTimestamp, SeriesMarker<UTCTimestamp>>();
                         info.candlestick_patterns.forEach((pattern: any) => {
@@ -601,7 +573,6 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         fetchData().then();
 
         return () => {
-            // symbol 切换或卸载：取消所有请求 + 停止实时轮询
             controller.abort();
             if (realtimeTimerRef.current) {
                 clearInterval(realtimeTimerRef.current);
@@ -610,10 +581,10 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         };
     }, [symbol]);
 
+    // ── JSX：只需一个容器 div ────────────────────────────────────────────────
     return (
         <div className="flex flex-col w-full h-full">
-            <div ref={chartContainerRef} className="flex-grow"></div>
-            <div ref={volumeContainerRef} className="h-[300px]"></div>
+            <div ref={chartContainerRef} className="w-full h-full"></div>
         </div>
     );
 }
