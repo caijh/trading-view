@@ -126,6 +126,17 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
     const klineDataRef = useRef<OhlcData[]>([]);
 
+    // ── 价格提醒：存储需要监控的价位 ─────────────────────────────────────────
+    const alertPricesRef = useRef<{
+        support?: number;
+        resistance?: number;
+        entryPrice?: number;
+        takeProfit?: number;
+        stopLoss?: number;
+    }>({});
+    // 已触发过的提醒 key，避免同一价位反复弹 toast（symbol 切换时重置）
+    const triggeredAlertsRef = useRef<Set<string>>(new Set());
+
     // 记录最新实时 K 线对应的前收盘价（即历史末根的 close）
     const prevCloseRef = useRef<number>(0);
 
@@ -242,6 +253,10 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
             realtimeTimerRef.current = null;
         }
 
+        // 切换 symbol 时重置价格提醒状态
+        alertPricesRef.current = {};
+        triggeredAlertsRef.current = new Set();
+
         const controller = new AbortController();
         const { signal } = controller;
 
@@ -254,6 +269,37 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 priceLinesRef.current = [];
                 candleSeriesMarkersRef.current?.setMarkers([]);
             } catch { }
+        };
+
+        // ── 价格提醒检查：当 K 线的 [low, high] 覆盖某个价位时触发 toast ─────
+        const checkPriceAlerts = (candle: OhlcData) => {
+            const { low, high } = candle;
+            const alerts = alertPricesRef.current;
+            const triggered = triggeredAlertsRef.current;
+
+            const check = (
+                key: string,
+                price: number | undefined,
+                label: string,
+                icon: string,
+                toastStyle: { background: string; color: string; border: string }
+            ) => {
+                if (!price || triggered.has(key)) return;
+                if (low <= price && price <= high) {
+                    triggered.add(key);
+                    toast(`${icon} ${symbol} ${label} ${price}`, {
+                        duration: 6000,
+                        style: toastStyle,
+                        icon,
+                    });
+                }
+            };
+
+            check('support',    alerts.support,    '触及支撑价',  '🟢', { background: '#f0fdf4', color: '#166534', border: '1px solid #86efac' });
+            check('resistance', alerts.resistance, '触及阻力价',  '🔴', { background: '#fef2f2', color: '#991b1b', border: '1px solid #fca5a5' });
+            check('entry',      alerts.entryPrice, '触及入场价',  '📍', { background: '#eff6ff', color: '#1e40af', border: '1px solid #93c5fd' });
+            check('takeProfit', alerts.takeProfit, '触及止盈价',  '✅', { background: '#f0fdf4', color: '#166534', border: '1px solid #4ade80' });
+            check('stopLoss',   alerts.stopLoss,   '触及止损价',  '⛔', { background: '#fff7ed', color: '#9a3412', border: '1px solid #fdba74' });
         };
 
         // ── 实时价格：用接口数据更新/追加最新一根日线 ──────────────────────
@@ -277,6 +323,9 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 value: parseFloat(priceData.volume),
                 color: updatedCandle.close >= updatedCandle.open ? "#16a34a" : "#ef4444",
             });
+
+            // ── 价格提醒检测 ───────────────────────────────────────────────────
+            checkPriceAlerts(updatedCandle);
 
             // ── 同步更新本地缓存 ─────────────────────────────────────────────────
             const idx = klineDataRef.current.findIndex(d => d.time === ts);
@@ -440,6 +489,15 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 if (analysisJson.code === 0 && analysisJson.data) {
                     const info = analysisJson.data;
                     onAnalysisDataAction(info);
+
+                    // ── 登记所有需要监控的价位 ─────────────────────────────────
+                    alertPricesRef.current = {
+                        support:    info.support     ? parseFloat(info.support)                       : undefined,
+                        resistance: info.resistance  ? parseFloat(info.resistance)                    : undefined,
+                        entryPrice: info.strategy?.entry_price  ? parseFloat(info.strategy.entry_price)  : undefined,
+                        takeProfit: info.strategy?.take_profit  ? parseFloat(info.strategy.take_profit)  : undefined,
+                        stopLoss:   info.strategy?.stop_loss    ? parseFloat(info.strategy.stop_loss)    : undefined,
+                    };
 
                     if (info.support) {
                         try {
