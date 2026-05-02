@@ -94,7 +94,10 @@ const getTime = (symbol: string, datetime_str: string, format_str: string): UTCT
         locale = zhCN;
     }
     const time = parse(datetime_str, format_str, new Date(), { locale });
-    return Math.floor(time.getTime() / 1000) as UTCTimestamp;
+    // lightweight-charts 以 UTC 显示时间戳，而 date-fns parse 得到的是本地时间对应的 UTC ms。
+    // 减去本地时区偏移，使图表显示"本地时间"而非 UTC（修复 UTC+8 少显示 8 小时的问题）。
+    const offsetMs = time.getTimezoneOffset() * 60 * 1000; // UTC+8 → -480 * 60000
+    return Math.floor((time.getTime() - offsetMs) / 1000) as UTCTimestamp;
 };
 
 // 实时价格轮询间隔（毫秒）
@@ -543,7 +546,8 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                         const markerMap = new Map<UTCTimestamp, SeriesMarker<UTCTimestamp>>();
                         info.candlestick_patterns.forEach((pattern: any) => {
                             pattern.match_indexes.forEach((dateStr: string) => {
-                                const ts = Math.floor(new Date(dateStr).getTime() / 1000) as UTCTimestamp;
+                                const d = new Date(dateStr);
+                                const ts = Math.floor((d.getTime() - d.getTimezoneOffset() * 60 * 1000) / 1000) as UTCTimestamp;
                                 let color = "#facc15";
                                 let shape: "arrowUp" | "arrowDown" | "circle" = "circle";
                                 let position: "aboveBar" | "belowBar" = "aboveBar";
