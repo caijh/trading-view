@@ -346,14 +346,6 @@ export default function Chart() {
                                                 : "--"}
                                         </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <div><strong>Exit Patterns:</strong></div>
-                                        <div>
-                                            {Array.isArray(analysisData.strategy.exit_patterns) && analysisData.strategy.exit_patterns.length > 0
-                                                ? analysisData.strategy.exit_patterns.join(", ")
-                                                : "--"}
-                                        </div>
-                                    </div>
                                 </>
                             )}
                         </div>
