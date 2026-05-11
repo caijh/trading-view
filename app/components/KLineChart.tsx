@@ -123,6 +123,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
     const eam5SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
     const sma20SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
+    const sma50SeriesRef = useRef<ISeriesApi<"Line"> | undefined>(undefined);
 
     const klineDataRef = useRef<OhlcData[]>([]);
 
@@ -349,6 +350,11 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 sma20SeriesRef.current.update({ time: ts, value: sum / 20 } as any);
             }
 
+            if (sma50SeriesRef.current && latestKline.length >= 50) {
+                const sum = latestKline.slice(-50).reduce((acc, d) => acc + d.close, 0);
+                sma50SeriesRef.current.update({ time: ts, value: sum / 50 } as any);
+            }
+
             prevCloseRef.current = latestKline.length >= 2
                 ? latestKline[latestKline.length - 2].close
                 : 0;
@@ -453,6 +459,15 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                     });
                 }
                 sma20SeriesRef.current?.setData(sma20Data);
+
+                // SMA50
+                const sma50Data = calculateSMA(klineData, 50);
+                if (!sma50SeriesRef.current) {
+                    sma50SeriesRef.current = mainChartRef.current?.addSeries(LineSeries, {
+                        color: "#f59e0b", lineWidth: 2, lineStyle: 0, title: "SMA50",
+                    });
+                }
+                sma50SeriesRef.current?.setData(sma50Data);
 
                 mainChartRef.current?.timeScale().fitContent();
 
