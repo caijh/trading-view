@@ -288,7 +288,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
                 if (!price || triggered.has(key)) return;
                 if (low <= price && price <= high) {
                     triggered.add(key);
-                    toast(`${icon} ${symbol} ${label} ${price}`, {
+                    toast(`${symbol} ${label} ${price}`, {
                         duration: 6000,
                         style: toastStyle,
                         icon,
