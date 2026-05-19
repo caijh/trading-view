@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
             },
             {
                 source: '/api/trading-data/:path*',
-                destination: 'https://gateway.joinspace.pp.ua/trading-data/:path*',
+                destination: 'http://138.3.211.91/trading-data/:path*',
             }
         ];
     },
