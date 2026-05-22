@@ -1,366 +1,346 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Watchlist — H5</title>
-  <style>
-    :root{--bg:#ffffff;--muted:#6b7280;--green:#10b981;--red:#ef4444;--card:#f8fafc}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4;background:#f3f4f6;margin:0;padding:24px}
-    .card{background:var(--bg);border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden;margin:0 auto}
-  .card .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6edf3}
-    .title{display:flex;align-items:center;gap:10px;font-weight:600}
-    .controls{display:flex;gap:8px;align-items:center}
-    input.search{padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:14px;width:180px}
-    select.sort{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px}
-    ul.list{list-style:none;margin:0;padding:0}
-    li.item{display:flex;justify-content:space-between;gap:4px;padding:6px 10px;align-items:center;border-bottom:1px solid #f1f5f9;cursor:pointer}
-    li.item:hover{background:#fbfdff}
-    .left .ticker{font-weight:600}
-    .muted{color:var(--muted);font-size:12px}
-    .badges{display:flex;gap:6px}
-    .badge{padding:4px 8px;border-radius:6px;font-size:12px}
-    .tp{background:#ecfdf5;color:var(--green)}
-    .sl{background:#fff1f2;color:var(--red)}
-    .entry{font-weight:700}
-    .row-info{font-size:13px;color:#374151}
-    .reload{background:none;border:0;color:#2563eb;cursor:pointer;font-size:14px}
-    .center{text-align:center;padding:12px;color:var(--muted)}
-    @media (max-width:520px){.controls{flex-direction:column;align-items:stretch}.title{font-size:16px}}
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Watchlist — H5</title>
+    <style> :root {
+        --bg: #ffffff;
+        --muted: #6b7280;
+        --green: #10b981;
+        --red: #ef4444;
+        --card: #f8fafc
+    }
+
+    body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        line-height: 1.4;
+        background: #f3f4f6;
+        margin: 0;
+        padding: 24px
+    }
+
+    .card {
+        background: var(--bg);
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+        overflow: hidden;
+        margin: 0 auto
+    }
+
+    .card .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e6edf3
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600
+    }
+
+    .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center
+    }
+
+    input.search {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 14px;
+        width: 180px
+    }
+
+    select.sort {
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 13px
+    }
+
+    ul.list {
+        list-style: none;
+        margin: 0;
+        padding: 0
+    }
+
+    li.item {
+        display: flex;
+        justify-content: space-between;
+        gap: 4px;
+        padding: 6px 10px;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer
+    }
+
+    li.item:hover {
+        background: #fbfdff
+    }
+
+    .left .ticker {
+        font-weight: 600
+    }
+
+    .muted {
+        color: var(--muted);
+        font-size: 12px
+    }
+
+    .badges {
+        display: flex;
+        gap: 6px
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px
+    }
+
+    .tp {
+        background: #ecfdf5;
+        color: var(--green)
+    }
+
+    .sl {
+        background: #fff1f2;
+        color: var(--red)
+    }
+
+    .entry {
+        font-weight: 700
+    }
+
+    .row-info {
+        font-size: 13px;
+        color: #374151
+    }
+
+    .reload {
+        background: none;
+        border: 0;
+        color: #2563eb;
+        cursor: pointer;
+        font-size: 14px
+    }
+
+    .center {
+        text-align: center;
+        padding: 12px;
+        color: var(--muted)
+    }
+
+    .badge-strategy {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-left: 4px
+    }
+
+    .badge-long {
+        background: #dbeafe;
+        color: #1e40af
+    }
+
+    .badge-short {
+        background: #f3e8ff;
+        color: #7e22ce
+    }
+
+    .badge-suggestion {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-left: 4px
+    }
+
+    .suggestion-bh {
+        background: #ecfdf5;
+        color: #16a34a;
+        border: 1px solid #bbf7d0
+    }
+
+    .suggestion-n {
+        background: #fef9c3;
+        color: #a16207;
+        border: 1px solid #fde68a
+    }
+
+    .suggestion-s {
+        background: #fff1f2;
+        color: #ef4444;
+        border: 1px solid #fecaca
+    }
+
+    @media (max-width: 520px) {
+        .controls {
+            flex-direction: column;
+            align-items: stretch
+        }
+
+        .title {
+            font-size: 16px
+        }
+    }
+
     /* Modal styles */
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(2,6,23,0.6);z-index:9999;align-items:flex-start;justify-content:center;padding:60px 18px 18px}
-    .modal-card{background:#fff;border-radius:10px;max-width:920px;width:100%;max-height:84vh;overflow:hidden;box-shadow:0 12px 40px rgba(2,6,23,0.45);display:flex;flex-direction:column}
-    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eef2f7}
-    .modal-title{font-weight:700;font-size:16px;color:#0f172a}
-    .modal-body{padding:14px 18px;overflow:auto;flex:1}
-    .modal-row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed #f1f5f9}
-    .modal-label{min-width:200px;color:#6b7280;font-weight:600}
-    .modal-value{color:#0f172a;flex:1;text-align:left;min-width:0}
-    .badge-signal{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
-    .badge-bull{background:#ecfdf5;color:#16a34a;border:1px solid #bbf7d0}
-    .badge-bear{background:#fff1f2;color:#ef4444;border:1px solid #fecaca}
-    .list-pre{background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #eef2f7;max-height:240px;overflow:auto;font-size:13px}
-    .modal-actions{display:flex;gap:8px;align-items:center}
-    .btn-ghost{background:none;border:1px solid #e6eef6;padding:6px 10px;border-radius:8px;cursor:pointer;color:#0f172a}
-  </style>
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.6);
+        z-index: 9999;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 60px 18px 18px
+    }
+
+    .modal-card {
+        background: #fff;
+        border-radius: 10px;
+        max-width: 920px;
+        width: 100%;
+        max-height: 84vh;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(2, 6, 23, 0.45);
+        display: flex;
+        flex-direction: column
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid #eef2f7
+    }
+
+    .modal-title {
+        font-weight: 700;
+        font-size: 16px;
+        color: #0f172a
+    }
+
+    .modal-body {
+        padding: 14px 18px;
+        overflow: auto;
+        flex: 1
+    }
+
+    .modal-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-bottom: 1px dashed #f1f5f9
+    }
+
+    .modal-label {
+        min-width: 200px;
+        color: #6b7280;
+        font-weight: 600
+    }
+
+    .modal-value {
+        color: #0f172a;
+        flex: 1;
+        text-align: left;
+        min-width: 0
+    }
+
+    .badge-signal {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700
+    }
+
+    .badge-bull {
+        background: #ecfdf5;
+        color: #16a34a;
+        border: 1px solid #bbf7d0
+    }
+
+    .badge-bear {
+        background: #fff1f2;
+        color: #ef4444;
+        border: 1px solid #fecaca
+    }
+
+    .list-pre {
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #eef2f7;
+        max-height: 240px;
+        overflow: auto;
+        font-size: 13px
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center
+    }
+
+    .btn-ghost {
+        background: none;
+        border: 1px solid #e6eef6;
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #0f172a
+    } </style>
 </head>
 <body>
-  <div class="card">
+<div class="card">
     <div class="header">
-      <div class="title">👁 Watchlist</div>
-      <div class="controls">
-        <label for="strategyFilter"></label><select id="strategyFilter" class="sort"><option value="All">All</option><option value="Long">Long</option><option value="Short">Short</option></select>
-        <label for="q"></label><input class="search" id="q" placeholder="Search ticker or name" />
-        <label for="sort"></label><select id="sort" class="sort"><option value="Profit">Sort: Profit</option><option value="Price">Sort: Price</option></select>
-        <button id="reload" class="reload">⟳ Reload</button>
-      </div>
-    </div>
-
-    <div id="status" class="center">Loading...</div>
-
-    <ul id="list" class="list" style="display:none"></ul>
-
-    <div class="center" style="padding:10px;font-size:13px;color:#94a3b8">· Click a row to log stock data ·</div>
-  </div>
-
-  <!-- Modal -->
-  <div id="analysisModal" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div id="modalTitle" class="modal-title">Analysis</div>
-        <div class="modal-actions">
-          <button id="modalCopy" class="btn-ghost" title="Copy JSON">Copy</button>
-          <button id="modalClose" style="background:none;border:0;font-size:18px;cursor:pointer">✕</button>
+        <div class="title">👁 Watchlist</div>
+        <div class="controls"><label for="strategyFilter"></label><select id="strategyFilter" class="sort">
+            <option value="All">All</option>
+            <option value="Long">Long</option>
+            <option value="Short">Short</option>
+        </select> <label for="q"></label><input class="search" id="q" placeholder="Search ticker or name"/> <label
+                for="sort"></label><select id="sort" class="sort">
+            <option value="Profit">Sort: Profit</option>
+            <option value="Price">Sort: Price</option>
+        </select>
+            <button id="reload" class="reload">⟳ Reload</button>
         </div>
-      </div>
-      <div id="modalBody" class="modal-body"></div>
     </div>
-  </div>
-
-  <script>
-    const listEl = document.getElementById('list');
-    const statusEl = document.getElementById('status');
-    const qEl = document.getElementById('q');
-    const sortEl = document.getElementById('sort');
-    const reloadBtn = document.getElementById('reload');
-    const strategyFilterEl = document.getElementById('strategyFilter');
-
-    let stocks = [];
-
-    // 计算利润百分比
-    function calculateProfitPercentage(price, takeProfit, strategyType){
-      if(strategyType === 'Long'){
-        return ((takeProfit - price) / price * 100).toFixed(2);
-      } else {
-        // Short: profit when price goes down
-        return ((price - takeProfit) / price * 100).toFixed(2);
-      }
-    }
-
-    // 计算亏损百分比
-    function calculateLossPercentage(price, stopLoss, strategyType){
-      if(strategyType === 'Long'){
-        return ((stopLoss - price) / price * 100).toFixed(2);
-      } else {
-        // Short: loss when price goes up
-        return ((price - stopLoss) / price * 100).toFixed(2);
-      }
-    }
-
-    async function fetchStocks(){
-      statusEl.textContent = 'Loading...';
-      statusEl.style.display = '';
-      listEl.style.display = 'none';
-      try{
-        const res = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=1000',{
-          method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({})
-        });
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const data = await res.json();
-        stocks = (data.data.items||[]).map(item=>({
-          ticker:item.stock_code,
-          name:item.stock_name,
-          price:parseFloat(item.entry_price||0),
-          take_profit:parseFloat(item.take_profit||0),
-          stop_loss:parseFloat(item.stop_loss||0),
-          strategy_name:item.strategy_name||'',
-          holding:!!item.holding,
-          strategy_type:item.strategy_type||'Long'
-        }));
-        render();
-      }catch(e){
-        statusEl.textContent = 'Failed to load stock data.';
-        console.error(e);
-      }
-    }
-
-    function render(){
-      const q = (qEl.value||'').trim().toLowerCase();
-      const sortBy = sortEl.value;
-      const strategyFilter = strategyFilterEl ? strategyFilterEl.value : 'All';
-      let filtered = stocks.filter(s=>{
-        // 文本搜索过滤
-        const matchesSearch = s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
-        // 策略类型过滤
-        const matchesStrategy = strategyFilter === 'All' || s.strategy_type === strategyFilter;
-        return matchesSearch && matchesStrategy;
-      });
-      filtered.sort((a,b)=> {
-        if(sortBy === 'Price'){
-          return b.price - a.price;
-        } else {
-          // 按利润百分比排序，考虑 strategy_type
-          const aProfitPct = parseFloat(calculateProfitPercentage(a.price, a.take_profit, a.strategy_type));
-          const bProfitPct = parseFloat(calculateProfitPercentage(b.price, b.take_profit, b.strategy_type));
-          return bProfitPct - aProfitPct;
-        }
-      });
-
-      listEl.innerHTML = '';
-      if(filtered.length===0){
-        statusEl.textContent = 'No stocks found.';
-        statusEl.style.display = '';
-        listEl.style.display = 'none';
-        return;
-      }
-
-      statusEl.style.display = 'none';
-      listEl.style.display = '';
-
-      filtered.forEach(s=>{
-        const li = document.createElement('li');
-        li.className = 'item';
-        li.innerHTML = `
-          <div class="left">
-            <div style="display:flex;align-items:center;gap:4px">
-              <span style="width:10px;height:10px;border-radius:50%;background:${s.holding? '#ef4444':'#fff'};border:${s.holding? '':'2px solid #d1d5db'};display:inline-block"></span>
-              <div>
-                <div class="ticker">${s.ticker} <span class="muted">${s.name}</span></div>
-                <div class="muted">· ${ (s.ticker.split('.').pop()||'').toUpperCase() } ${s.strategy_name}</div>
-              </div>
+    <div id="status" class="center">Loading...</div>
+    <ul id="list" class="list" style="display:none"></ul>
+    <div class="center" style="padding:10px;font-size:13px;color:#94a3b8">· Click a row to log stock data ·</div>
+</div> <!-- Modal -->
+<div id="analysisModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div id="modalTitle" class="modal-title">Analysis</div>
+            <div class="modal-actions">
+                <button id="modalCopy" class="btn-ghost" title="Copy JSON">Copy</button>
+                <button id="modalClose" style="background:none;border:0;font-size:18px;cursor:pointer">✕</button>
             </div>
-          </div>
-          <div style="text-align:right">
-            <div class="row-info">
-              <span class="muted">Entry:</span> <span class="entry">${s.price.toFixed(2)}</span>
-              <span style="color:${parseFloat(calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px">
-                ${calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)}%
-              </span>
-              <span style="color:${parseFloat(calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px">
-                ${calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)}%
-              </span>
-            </div>
-            <div class="badges">
-              <span class="badge tp">${s.take_profit.toFixed(2)}</span>
-              <span class="badge sl">${s.stop_loss.toFixed(2)}</span>
-            </div>
-          </div>
-        `;
-        li.addEventListener('click',()=>{ fetchAnalysis(s.ticker); });
-        listEl.appendChild(li);
-      });
-    }
-
-    qEl.addEventListener('input', ()=> render());
-    sortEl.addEventListener('change', ()=> render());
-    strategyFilterEl?.addEventListener('change', ()=> render());
-    reloadBtn.addEventListener('click', ()=> fetchStocks());
-
-    // Modal helpers
-    const modal = document.getElementById('analysisModal');
-    const modalBody = document.getElementById('modalBody');
-    const modalClose = document.getElementById('modalClose');
-    const modalCopy = document.getElementById('modalCopy');
-    function openModal(){
-      if(modal) modal.style.display = 'flex';
-    }
-    function closeModal(){
-      if(modal) modal.style.display = 'none';
-      if(modalBody) modalBody.innerHTML = '';
-    }
-    modalClose?.addEventListener('click', closeModal);
-    modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
-
-    function renderKeyValue(label, value){
-      return `<div class="modal-row"><div class="modal-label">${label}</div><div class="modal-value">${value}</div></div>`;
-    }
-
-    async function fetchAnalysis(ticker){
-      try{
-        if(modalBody) modalBody.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Loading analysis...</div>';
-        openModal();
-        const res = await fetch('/api/trading-plus/analysis/stock?code='+encodeURIComponent(ticker));
-        if(!res.ok){
-          if(modalBody) modalBody.innerHTML = `<div style="color:#ef4444">Failed to load analysis: HTTP ${res.status}</div>`;
-          return;
-        }
-        const json = await res.json();
-        if(json.code !== 0 || !json.data){
-          if(modalBody) modalBody.innerHTML = '<div style="color:#ef4444">No analysis available.</div>';
-          return;
-        }
-        const info = json.data;
-        let html = '';
-        // set dynamic title
-        const titleEl = document.getElementById('modalTitle');
-        if(titleEl) titleEl.textContent = `Analysis ${ticker}`;
-
-        // Basic details
-        if(info.name) html += renderKeyValue('Name', info.name);
-        if(info.exchange) html += renderKeyValue('Exchange', info.exchange);
-        if(info.stock_type) html += renderKeyValue('Type', info.stock_type);
-        if(info.stock_code) html += renderKeyValue('Code', info.stock_code);
-        if(info.trending){
-          let icon = '➖'; // flat
-          if(info.trending === 'UP') icon='▲';
-          else if(info.trending === 'DOWN') icon='▼';
-          html += renderKeyValue('Trending', `${icon}`);
-        }
-        if(info.direction){
-          let dirIcon='➖';
-          if(info.direction === 'UP') dirIcon='▲';
-          else if(info.direction === 'DOWN') dirIcon='▼';
-          html += renderKeyValue('Direction', `${dirIcon}`);
-        }
-
-        // Support / Resistance / support_date
-        if(typeof info.support !== 'undefined') html += renderKeyValue('Support', `<span style="color:#059669;font-weight:700">${info.support}</span>`);
-        if(typeof info.resistance !== 'undefined') html += renderKeyValue('Resistance', `<span style="color:#ef4444;font-weight:700">${info.resistance}</span>`);
-        if(info.support_date) html += renderKeyValue('Support date', info.support_date.split(' ')[0]);
-
-        // Price / volume
-        if(typeof info.price !== 'undefined') html += renderKeyValue('Price', info.price);
-        if(typeof info.volume !== 'undefined') html += renderKeyValue('Volume', info.volume);
-
-        // Candlestick signal badge
-        if(typeof info.candlestick_signal !== 'undefined'){
-          const sig = info.candlestick_signal;
-          let badge;
-          if(sig === 1) badge = '<span class="badge-signal badge-bull">Bull</span>';
-          else if(sig === -1) badge = '<span class="badge-signal badge-bear">Bear</span>';
-          else badge = '➖';
-          html += renderKeyValue('Candlestick Signal', badge);
-        }
-
-        // Candlestick patterns
-        if(info.candlestick_patterns && Array.isArray(info.candlestick_patterns) && info.candlestick_patterns.length){
-          const pats = info.candlestick_patterns.map((p)=>{
-            return `<div style="margin-bottom:6px"><strong>${p.label}</strong><div style="font-size:12px;color:#475569;margin-top:4px">Matches: ${Array.isArray(p.match_indexes)?p.match_indexes.join(', '):String(p.match_indexes)}</div></div>`;
-          }).join('');
-          html += `<div class="modal-row"><div class="modal-label">Candlestick Patterns</div><div class="modal-value"><div class="list-pre">${pats}</div></div></div>`;
-        }
-
-        // Indicator/training signals
-        if(typeof info.indicator_signal !== 'undefined'){
-          const sig = info.indicator_signal;
-          let val;
-          if(sig === 1) val = '<span class="badge-signal badge-bull">Bull</span>';
-          else if(sig === -1) val = '<span class="badge-signal badge-bear">Bear</span>';
-          else val = '➖';
-          html += renderKeyValue('Indicator Signal', val);
-        }
-        // Indicator patterns (primary + secondary)
-        if((info.primary_patterns && info.primary_patterns.length) || (info.secondary_patterns && info.secondary_patterns.length)){
-          const prim = info.primary_patterns||[];
-          const sec = info.secondary_patterns||[];
-          const combined = [...prim,...sec];
-          html += renderKeyValue('Indicator patterns', combined.join(', '));
-        }
-        if(typeof info.training_model_signal !== 'undefined'){
-          const sig = info.training_model_signal;
-          let val;
-          if(sig === 1) val = '<span class="badge-signal badge-bull">Bull</span>';
-          else if(sig === -1) val = '<span class="badge-signal badge-bear">Bear</span>';
-          else val = '➖';
-          html += renderKeyValue('AI Model Signal', val);
-        }
-        // AI patterns array
-        if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){
-          html += renderKeyValue('AI Model patterns', info.ai_patterns.join(', '));
-        }
-
-        // Turning points list
-        if(info.turning && Array.isArray(info.turning) && info.turning.length){
-          const items = info.turning.map((t)=>{
-            const time = (t.time||'').split(' ')[0];
-            const type = t.type === 1 ? 'Up' : t.type === -1 ? 'Down' : String(t.type);
-            return `<div style="margin-bottom:6px"><strong>${time}</strong> — ${type}</div>`;
-          }).join('');
-          html += `<div class="modal-row"><div class="modal-label">Turning</div><div class="modal-value"><div class="list-pre">${items}</div></div></div>`;
-        }
-
-
-
-
-        // Strategy details
-        if(info.strategy){
-          const strat = info.strategy;
-          html += `<div class="modal-row"><div class="modal-label">Strategy</div><div class="modal-value">`;
-          html += `<div><strong>${strat.strategy_name}</strong></div>`;
-          html += `<div><strong>${strat.strategy_type}</strong></div>`;
-          if(typeof strat.signal !== 'undefined'){
-            const s = strat.signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : strat.signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : strat.signal;
-            html += `<div>Signal: ${s}</div>`;
-          }
-          html += `<div>Entry: ${strat.entry_price} · TP: ${strat.take_profit} · SL: ${strat.stop_loss}</div>`;
-          html += `</div></div></div>`;
-        }
-
-        if(modalBody) modalBody.innerHTML = html;
-
-        // enable copy button
-        modalCopy?.addEventListener('click', ()=>{
-          try{navigator.clipboard.writeText(JSON.stringify(info,null,2));alert('Copied JSON to clipboard');}catch(e){alert('Copy failed');}
-        });
-
-      }catch(e){
-        if(modalBody) modalBody.innerHTML = '<div style="color:#ef4444">Error loading analysis.</div>';
-        console.error(e);
-      }
-    }
-
-    // initial load
-    fetchStocks();
-  </script>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
+    </div>
+</div>
+<script> const listEl = document.getElementById('list');
+const statusEl = document.getElementById('status');
+const qEl = document.getElementById('q');
+const sortEl = document.getElementById('sort');
+const reloadBtn = document.getElementById('reload');
+const strategyFilterEl = document.getElementById('strategyFilter');
+let stocks = []; // 计算利润百分比 function calculateProfitPercentage(price, takeProfit, strategyType){ if(strategyType === 'Long'){ return ((takeProfit - price) / price * 100).toFixed(2); } else { // Short: profit when price goes down return ((price - takeProfit) / price * 100).toFixed(2); } } // 计算亏损百分比 function calculateLossPercentage(price, stopLoss, strategyType){ if(strategyType === 'Long'){ return ((stopLoss - price) / price * 100).toFixed(2); } else { // Short: loss when price goes up return ((price - stopLoss) / price * 100).toFixed(2); } } // 获取操作建议 function getActionSuggestion(strategyType, holding, signal){ if(strategyType === 'Long'){ if(!holding){ if(signal === 1) return 'B'; if(signal === 0) return 'N'; if(signal === -1) return 'S'; } else { if(signal === 1 || signal === 0) return 'H'; if(signal === -1) return 'S'; } } if(strategyType === 'Short'){ if(!holding){ if(signal === -1) return 'S'; if(signal === 0) return 'N'; if(signal === 1) return 'B'; } else { if(signal === -1 || signal === 0) return 'H'; if(signal === 1) return 'B'; } } return null; } // 获取操作建议的CSS类名 function getActionSuggestionClass(suggestion){ if(!suggestion) return ''; switch(suggestion){ case 'B': case 'H': return 'suggestion-bh'; case 'N': return 'suggestion-n'; case 'S': return 'suggestion-s'; default: return ''; } } async function fetchStocks(){ statusEl.textContent = 'Loading...'; statusEl.style.display = ''; listEl.style.display = 'none'; try{ const res = await fetch('/api/trading-plus/strategy/trading?page=1&page_size=1000',{ method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({}) }); if(!res.ok) throw new Error('HTTP '+res.status); const data = await res.json(); stocks = (data.data.items||[]).map(item=>({ ticker:item.stock_code, name:item.stock_name, price:parseFloat(item.entry_price||0), take_profit:parseFloat(item.take_profit||0), stop_loss:parseFloat(item.stop_loss||0), strategy_name:item.strategy_name||'', holding:!!item.holding, strategy_type:item.strategy_type||'Long', signal:item.signal||0 })); render(); }catch(e){ statusEl.textContent = 'Failed to load stock data.'; console.error(e); } } function render(){ const q = (qEl.value||'').trim().toLowerCase(); const sortBy = sortEl.value; const strategyFilter = strategyFilterEl ? strategyFilterEl.value : 'All'; let filtered = stocks.filter(s=>{ // 文本搜索过滤 const matchesSearch = s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q); // 策略类型过滤 const matchesStrategy = strategyFilter === 'All' || s.strategy_type === strategyFilter; return matchesSearch && matchesStrategy; }); filtered.sort((a,b)=> { if(sortBy === 'Price'){ return b.price - a.price; } else { // 按利润百分比排序，考虑 strategy_type const aProfitPct = parseFloat(calculateProfitPercentage(a.price, a.take_profit, a.strategy_type)); const bProfitPct = parseFloat(calculateProfitPercentage(b.price, b.take_profit, b.strategy_type)); return bProfitPct - aProfitPct; } }); listEl.innerHTML = ''; if(filtered.length===0){ statusEl.textContent = 'No stocks found.'; statusEl.style.display = ''; listEl.style.display = 'none'; return; } statusEl.style.display = 'none'; listEl.style.display = ''; filtered.forEach(s=>{ const li = document.createElement('li'); li.className = 'item'; // 计算 suggestion const suggestion = getActionSuggestion(s.strategy_type, s.holding, s.signal); const suggestionClass = getActionSuggestionClass(suggestion); li.innerHTML = ` <div class="left"> <div style="display:flex;align-items:center;gap:4px"> <span style="width:10px;height:10px;border-radius:50%;background:${s.holding? '#ef4444':'#fff'};border:${s.holding? '':'2px solid #d1d5db'};display:inline-block"></span> <div> <div class="ticker"> ${s.ticker} <span class="muted">${s.name}</span> ${s.strategy_type === 'Long' ? '<span class="badge-strategy badge-long">Long</span>' : ''} ${s.strategy_type === 'Short' ? '<span class="badge-strategy badge-short">Short</span>' : ''} ${suggestion ? '<span class="badge-suggestion '+suggestionClass+'">'+suggestion+'</span>' : ''} </div> <div class="muted">· ${ (s.ticker.split('.').pop()||'').toUpperCase() } ${s.strategy_name}</div> </div> </div> </div> <div style="text-align:right"> <div class="row-info"> <span class="muted">Entry:</span> <span class="entry">${s.price.toFixed(2)}</span> <span style="color:${parseFloat(calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px"> ${calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)}% </span> <span style="color:${parseFloat(calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px"> ${calculateLossPercentage(s.price, s.stop_loss, s.strategy_type)}% </span> </div> <div class="badges"> <span class="badge tp">${s.take_profit.toFixed(2)}</span> <span class="badge sl">${s.stop_loss.toFixed(2)}</span> </div> </div> `; li.addEventListener('click',()=>{ fetchAnalysis(s.ticker); }); listEl.appendChild(li); }); } qEl.addEventListener('input', ()=> render()); sortEl.addEventListener('change', ()=> render()); strategyFilterEl?.addEventListener('change', ()=> render()); reloadBtn.addEventListener('click', ()=> fetchStocks()); // Modal helpers const modal = document.getElementById('analysisModal'); const modalBody = document.getElementById('modalBody'); const modalClose = document.getElementById('modalClose'); const modalCopy = document.getElementById('modalCopy'); function openModal(){ if(modal) modal.style.display = 'flex'; } function closeModal(){ if(modal) modal.style.display = 'none'; if(modalBody) modalBody.innerHTML = ''; } modalClose?.addEventListener('click', closeModal); modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); }); function renderKeyValue(label, value){ return `<div class="modal-row"><div class="modal-label">${label}</div><div class="modal-value">${value}</div></div>`; } async function fetchAnalysis(ticker){ try{ if(modalBody) modalBody.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Loading analysis...</div>'; openModal(); const res = await fetch('/api/trading-plus/analysis/stock?code='+encodeURIComponent(ticker)); if(!res.ok){ if(modalBody) modalBody.innerHTML = `<div style="color:#ef4444">Failed to load analysis: HTTP ${res.status}</div>`; return; } const json = await res.json(); if(json.code !== 0 || !json.data){ if(modalBody) modalBody.innerHTML = '<div style="color:#ef4444">No analysis available.</div>'; return; } const info = json.data; let html = ''; // set dynamic title const titleEl = document.getElementById('modalTitle'); if(titleEl) titleEl.textContent = `Analysis ${ticker}`; // Basic details if(info.name) html += renderKeyValue('Name', info.name); if(info.exchange) html += renderKeyValue('Exchange', info.exchange); if(info.stock_type) html += renderKeyValue('Type', info.stock_type); if(info.stock_code) html += renderKeyValue('Code', info.stock_code); if(info.trending){ let icon = '➖'; // flat if(info.trending === 'UP') icon='▲'; else if(info.trending === 'DOWN') icon='▼'; html += renderKeyValue('Trending', `${icon}`); } if(info.direction){ let dirIcon='➖'; if(info.direction === 'UP') dirIcon='▲'; else if(info.direction === 'DOWN') dirIcon='▼'; html += renderKeyValue('Direction', `${dirIcon}`); } // Support / Resistance / support_date if(typeof info.support !== 'undefined') html += renderKeyValue('Support', `<span style="color:#059669;font-weight:700">${info.support}</span>`); if(typeof info.resistance !== 'undefined') html += renderKeyValue('Resistance', `<span style="color:#ef4444;font-weight:700">${info.resistance}</span>`); if(info.support_date) html += renderKeyValue('Support date', info.support_date.split(' ')[0]); // Price / volume if(typeof info.price !== 'undefined') html += renderKeyValue('Price', info.price); if(typeof info.volume !== 'undefined') html += renderKeyValue('Volume', info.volume); // Candlestick signal badge if(typeof info.candlestick_signal !== 'undefined'){ const sig = info.candlestick_signal; let badge; if(sig === 1) badge = '<span class="badge-signal badge-bull">Bull</span>'; else if(sig === -1) badge = '<span class="badge-signal badge-bear">Bear</span>'; else badge = '➖'; html += renderKeyValue('Candlestick Signal', badge); } // Candlestick patterns if(info.candlestick_patterns && Array.isArray(info.candlestick_patterns) && info.candlestick_patterns.length){ const pats = info.candlestick_patterns.map((p)=>{ return `<div style="margin-bottom:6px"><strong>${p.label}</strong><div style="font-size:12px;color:#475569;margin-top:4px">Matches: ${Array.isArray(p.match_indexes)?p.match_indexes.join(', '):String(p.match_indexes)}</div></div>`; }).join(''); html += `<div class="modal-row"><div class="modal-label">Candlestick Patterns</div><div class="modal-value"><div class="list-pre">${pats}</div></div></div>`; } // Indicator/training signals if(typeof info.indicator_signal !== 'undefined'){ const sig = info.indicator_signal; let val; if(sig === 1) val = '<span class="badge-signal badge-bull">Bull</span>'; else if(sig === -1) val = '<span class="badge-signal badge-bear">Bear</span>'; else val = '➖'; html += renderKeyValue('Indicator Signal', val); } // Indicator patterns (primary + secondary) if((info.primary_patterns && info.primary_patterns.length) || (info.secondary_patterns && info.secondary_patterns.length)){ const prim = info.primary_patterns||[]; const sec = info.secondary_patterns||[]; const combined = [...prim,...sec]; html += renderKeyValue('Indicator patterns', combined.join(', ')); } if(typeof info.training_model_signal !== 'undefined'){ const sig = info.training_model_signal; let val; if(sig === 1) val = '<span class="badge-signal badge-bull">Bull</span>'; else if(sig === -1) val = '<span class="badge-signal badge-bear">Bear</span>'; else val = '➖'; html += renderKeyValue('AI Model Signal', val); } // AI patterns array if(info.ai_patterns && Array.isArray(info.ai_patterns) && info.ai_patterns.length){ html += renderKeyValue('AI Model patterns', info.ai_patterns.join(', ')); } // Turning points list if(info.turning && Array.isArray(info.turning) && info.turning.length){ const items = info.turning.map((t)=>{ const time = (t.time||'').split(' ')[0]; const type = t.type === 1 ? 'Up' : t.type === -1 ? 'Down' : String(t.type); return `<div style="margin-bottom:6px"><strong>${time}</strong> — ${type}</div>`; }).join(''); html += `<div class="modal-row"><div class="modal-label">Turning</div><div class="modal-value"><div class="list-pre">${items}</div></div></div>`; } // Strategy details if(info.strategy){ const strat = info.strategy; html += `<div class="modal-row"><div class="modal-label">Strategy</div><div class="modal-value">`; html += `<div><strong>${strat.strategy_name}</strong></div>`; html += `<div><strong>${strat.strategy_type}</strong></div>`; if(typeof strat.signal !== 'undefined'){ const s = strat.signal === 1 ? '<span class="badge-signal badge-bull">Bull</span>' : strat.signal === -1 ? '<span class="badge-signal badge-bear">Bear</span>' : strat.signal; html += `<div>Signal: ${s}</div>`; } html += `<div>Entry: ${strat.entry_price} · TP: ${strat.take_profit} · SL: ${strat.stop_loss}</div>`; html += `</div></div></div>`; } if(modalBody) modalBody.innerHTML = html; // enable copy button modalCopy?.addEventListener('click', ()=>{ try{navigator.clipboard.writeText(JSON.stringify(info,null,2));alert('Copied JSON to clipboard');}catch(e){alert('Copy failed');} }); }catch(e){ if(modalBody) modalBody.innerHTML = '<div style="color:#ef4444">Error loading analysis.</div>'; console.error(e); } } // initial load fetchStocks(); </script>
 </body>
 </html>
