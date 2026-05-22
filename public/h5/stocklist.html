@@ -22,6 +22,10 @@
     .badge{padding:4px 8px;border-radius:6px;font-size:12px}
     .tp{background:#ecfdf5;color:var(--green)}
     .sl{background:#fff1f2;color:var(--red)}
+    .badge-suggestion{padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;margin-left:4px}
+    .sugg-buy-hold{background:#dcfce7;color:#166534}
+    .sugg-none{background:#fef9c3;color:#854d0e}
+    .sugg-sell{background:#fee2e2;color:#991b1b}
     .entry{font-weight:700}
     .row-info{font-size:13px;color:#374151}
     .reload{background:none;border:0;color:#2563eb;cursor:pointer;font-size:14px}
@@ -107,6 +111,40 @@
       }
     }
 
+    function getActionSuggestion(strategyType, holding, signal) {
+      if (strategyType === 'Long') {
+        if (!holding) {
+          if (signal === 1) return 'B';
+          if (signal === 0) return 'N';
+          if (signal === -1) return 'S';
+        } else {
+          if (signal === 1 || signal === 0) return 'H';
+          if (signal === -1) return 'S';
+        }
+      }
+      if (strategyType === 'Short') {
+        if (!holding) {
+          if (signal === -1) return 'S';
+          if (signal === 0) return 'N';
+          if (signal === 1) return 'B';
+        } else {
+          if (signal === -1 || signal === 0) return 'H';
+          if (signal === 1) return 'B';
+        }
+      }
+      return null;
+    }
+
+    function getActionSuggestionStyle(suggestion) {
+      switch (suggestion) {
+        case 'B':
+        case 'H': return 'sugg-buy-hold';
+        case 'N': return 'sugg-none';
+        case 'S': return 'sugg-sell';
+        default: return '';
+      }
+    }
+
     async function fetchStocks(){
       statusEl.textContent = 'Loading...';
       statusEl.style.display = '';
@@ -125,7 +163,8 @@
           stop_loss:parseFloat(item.stop_loss||0),
           strategy_name:item.strategy_name||'',
           holding:!!item.holding,
-          strategy_type:item.strategy_type||'Long'
+          strategy_type:item.strategy_type||'Long',
+          signal: item.signal
         }));
         render();
       }catch(e){
@@ -170,13 +209,19 @@
       filtered.forEach(s=>{
         const li = document.createElement('li');
         li.className = 'item';
+        const suggestion = getActionSuggestion(s.strategy_type, s.holding, s.signal);
         li.innerHTML = `
           <div class="left">
             <div style="display:flex;align-items:center;gap:4px">
               <span style="width:10px;height:10px;border-radius:50%;background:${s.holding? '#ef4444':'#fff'};border:${s.holding? '':'2px solid #d1d5db'};display:inline-block"></span>
               <div>
                 <div class="ticker">${s.ticker} <span class="muted">${s.name}</span></div>
-                <div class="muted">· ${ (s.ticker.split('.').pop()||'').toUpperCase() } ${s.strategy_name}</div>
+                <div class="muted">
+                  · ${(s.ticker.split('.').pop()||'').toUpperCase()} ${s.strategy_name}
+                  <span class="badge-suggestion ${getActionSuggestionStyle(suggestion)}">
+                    ${s.strategy_type} ${suggestion || ''}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -328,9 +373,6 @@
           }).join('');
           html += `<div class="modal-row"><div class="modal-label">Turning</div><div class="modal-value"><div class="list-pre">${items}</div></div></div>`;
         }
-
-
-
 
         // Strategy details
         if(info.strategy){
