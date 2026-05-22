@@ -227,7 +227,7 @@
           </div>
           <div style="text-align:right">
             <div class="row-info">
-              <span class="muted">Entry:</span> <span class="entry">${s.price.toFixed(2)}</span>
+              <span class="entry">${s.price.toFixed(2)}</span>
               <span style="color:${parseFloat(calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)) >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin-left:4px">
                 ${calculateProfitPercentage(s.price, s.take_profit, s.strategy_type)}%
               </span>
