@@ -400,7 +400,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         // ── 主流程：加载历史 K 线 ────────────────────────────────────────────
         const fetchData = async () => {
             try {
-                const response = await fetch(`/api/trading-data/stock/price/daily?code=${symbol}`, { signal });
+                const response = await fetch(`/api/trading-data/stock/day/prices?code=${symbol}`, { signal });
                 if (!response.ok) {
                     toast.error(`HTTP error! status: ${response.status}`);
                     return;
