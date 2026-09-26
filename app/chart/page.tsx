@@ -5,7 +5,7 @@ import Chart from "@/app/components/Chart";
 
 function LoadingProgress() {
     return (
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
             <div className="w-80">
                 <div className="h-2 bg-gray-200 rounded overflow-hidden relative">
                     <div
