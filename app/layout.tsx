@@ -28,27 +28,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <footer className="w-full border-t border-slate-200 bg-white py-2 text-center text-xs text-slate-500">
-          Charts powered by{" "}
-          <a
-            href="https://www.tradingview.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            TradingView
-          </a>
-          {" "}— using{" "}
-          <a
-            href="https://www.tradingview.com/lightweight-charts/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            Lightweight Charts&trade;
-          </a>
-          .
-        </footer>
       </body>
     </html>
   );
