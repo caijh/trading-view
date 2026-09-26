@@ -161,7 +161,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         const mainChart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
             height: window.innerHeight - 200,  // 整体更高，因为 volume 合并进来了
-            layout: { background: { color: "#ffffff" }, textColor: "#0f172a" },
+            layout: { background: { color: "#ffffff" }, textColor: "#0f172a", attributionLogo: false },
             rightPriceScale: { borderVisible: false },
             timeScale: {
                 borderVisible: false,
@@ -370,7 +370,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
 
         // ── 启动实时轮询 ────────────────────────────────────────────────────
         const startRealtimePolling = () => {
-            fetchRealtimePrice().then(r => {});
+            fetchRealtimePrice().then(() => {});
             realtimeTimerRef.current = setInterval(fetchRealtimePrice, REALTIME_POLL_INTERVAL);
         };
 
