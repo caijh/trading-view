@@ -127,7 +127,7 @@ export default function Chart() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-80px)] bg-slate-50 text-slate-900">
+        <div className="min-h-[calc(100vh-90px)] bg-slate-50 text-slate-900">
             <Toaster/>
             <div className="mx-auto p-4">
                 <header className="mb-4 flex items-center justify-between"/>
