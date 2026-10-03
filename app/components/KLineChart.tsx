@@ -160,7 +160,7 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         // ── 单一 chart，K线与 Volume 共享同一个视图 ──────────────────────────
         const mainChart = createChart(chartContainerRef.current, {
             width: chartContainerRef.current.clientWidth,
-            height: window.innerHeight - 200,  // 整体更高，因为 volume 合并进来了
+            height: chartContainerRef.current.clientHeight || (window.innerHeight - 200),  // 整体更高，因为 volume 合并进来了
             layout: { background: { color: "#ffffff" }, textColor: "#0f172a", attributionLogo: false },
             rightPriceScale: { borderVisible: false },
             timeScale: {
@@ -228,7 +228,10 @@ export default function KLineChart({ symbol, onAnalysisDataAction, onCrosshairMo
         // ── Resize ────────────────────────────────────────────────────────────
         const handleResize = () => {
             if (chartContainerRef.current) {
-                mainChart.applyOptions({ width: chartContainerRef.current.clientWidth });
+                mainChart.applyOptions({
+                    width: chartContainerRef.current.clientWidth,
+                    height: chartContainerRef.current.clientHeight,
+                });
             }
         };
         window.addEventListener("resize", handleResize);

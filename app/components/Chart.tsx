@@ -127,15 +127,13 @@ export default function Chart() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-90px)] bg-slate-50 text-slate-900">
+        <div className="h-screen overflow-hidden flex flex-col bg-slate-50 text-slate-900">
             <Toaster/>
-            <div className="mx-auto p-4">
-                <header className="mb-4 flex items-center justify-between"/>
-
-                <main className="grid grid-cols-12 gap-2 h-[calc(100vh-64px)]">
+            <div className="flex flex-col flex-1 min-h-0 w-full px-4">
+                <main className="flex-1 min-h-0 grid grid-cols-12 gap-2">
                     {/* left: chart area */}
-                    <section className="col-span-9 bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div className="p-4 border-b">
+                    <section className="col-span-9 flex flex-col min-h-0 bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div className="p-4 border-b shrink-0">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <div className="flex items-center gap-2">
@@ -215,7 +213,7 @@ export default function Chart() {
                             </div>
                         </div>
 
-                        <div className="p-4">
+                        <div className="flex-1 min-h-0 p-4">
                             <KLineChart
                                 symbol={symbol.ticker}
                                 onAnalysisDataAction={handleAnalysisData}
@@ -261,7 +259,7 @@ export default function Chart() {
                         <StockList onSelectAction={(s) => setSymbol(s)}/>
                     </aside>
                 </main>
-                <footer className="w-full border-t border-slate-200 bg-white py-2 text-center text-xs text-slate-500">
+                <footer className="w-full shrink-0 border-t border-slate-200 bg-white py-1.5 text-center text-xs text-slate-500">
                     Charts powered by{" "}
                     <a
                         href="https://www.tradingview.com/"
