@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TradingView",
+  title: "TradingStock",
   description: "mock the Trading View",
 };
 
