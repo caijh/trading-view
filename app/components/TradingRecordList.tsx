@@ -54,6 +54,33 @@ const formatTime = (v: string | null) => {
     return Number.isNaN(date.getTime()) ? "--" : date.toLocaleString("zh-CN", { hour12: false });
 };
 
+const getProfitLoss = (type: string | null, entry: string | null, exit: string | null) => {
+    if (entry === null || entry === undefined || entry === "" || exit === null || exit === undefined || exit === "") {
+        return null;
+    }
+    const entryNum = Number(entry);
+    const exitNum = Number(exit);
+    if (Number.isNaN(entryNum) || Number.isNaN(exitNum)) {
+        return null;
+    }
+    const value = type === "SHORT" ? entryNum - exitNum : exitNum - entryNum;
+    const positive = value >= 0;
+    const text = `${positive ? "+" : ""}${value.toFixed(2)}`;
+    return { text, positive };
+};
+
+const renderProfitLoss = (record: TradingRecord) => {
+    const pnl = getProfitLoss(record.type, record.entry_price, record.exit_price);
+    if (!pnl) {
+        return <td className="px-4 py-3">--</td>;
+    }
+    return (
+        <td className={`px-4 py-3 font-medium ${pnl.positive ? "text-green-600" : "text-red-600"}`}>
+            {pnl.text}
+        </td>
+    );
+};
+
 export default function TradingRecordList({ onClose }: TradingRecordListProps) {
     const [filters, setFilters] = useState<FilterState>({
         type: "ALL",
@@ -129,7 +156,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-lg shadow-xl w-[85vw] max-w-[1100px] max-h-[85vh] flex flex-col overflow-hidden"
+                className="bg-white rounded-lg shadow-xl w-[90vw] max-w-[1400px] max-h-[85vh] flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 弹窗标题栏 */}
@@ -216,6 +243,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                     <th className="px-4 py-3 font-medium">卖出价</th>
                                     <th className="px-4 py-3 font-medium">买入形态</th>
                                     <th className="px-4 py-3 font-medium">卖出形态</th>
+                                    <th className="px-4 py-3 font-medium">盈亏</th>
                                     <th className="px-4 py-3 font-medium">创建时间</th>
                                     <th className="px-4 py-3 font-medium">更新时间</th>
                                 </tr>
@@ -242,6 +270,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                         <td className="px-4 py-3">{formatPrice(record.exit_price)}</td>
                                         <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.buy_patterns)}</td>
                                         <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.sell_patterns)}</td>
+                                        {renderProfitLoss(record)}
                                         <td className="px-4 py-3 whitespace-nowrap">{formatTime(record.created_at)}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">{formatTime(record.updated_at)}</td>
                                     </tr>
