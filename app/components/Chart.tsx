@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import KLineChart, { OHLCWithPrevClose } from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
 import toast, { Toaster } from "react-hot-toast";
@@ -130,7 +131,14 @@ export default function Chart() {
         <div className="min-h-[calc(100vh-90px)] bg-slate-50 text-slate-900">
             <Toaster/>
             <div className="mx-auto p-4">
-                <header className="mb-4 flex items-center justify-between"/>
+                <header className="mb-4 flex items-center justify-end">
+                    <Link
+                        href="/records"
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                        交易记录
+                    </Link>
+                </header>
 
                 <main className="grid grid-cols-12 gap-2 h-[calc(100vh-64px)]">
                     {/* left: chart area */}
