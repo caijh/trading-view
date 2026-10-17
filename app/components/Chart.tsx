@@ -199,7 +199,7 @@ export default function Chart() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-end gap-2">
                                     {/* Icon button for displaying the analysis modal */}
                                     <button
                                         className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600"
