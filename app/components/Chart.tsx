@@ -149,21 +149,19 @@ export default function Chart() {
                                                       d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-1.85z"/>
                                             </svg>
                                         </button>
-                                    </div>
+                                        <div className="text-lg font-medium">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span>{symbol.ticker} — {symbol.name}</span>
 
-                                    <div className="text-lg font-medium">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span>{symbol.ticker} — {symbol.name}</span>
+                                                {/* ── OHLC + 涨跌幅展示 ──────────────────────────────── */}
+                                                {displayOHLC && (() => {
+                                                    const result = calcChange(displayOHLC);
+                                                    const closeUp = displayOHLC.close >= displayOHLC.open;
+                                                    const changeUp = result ? result.change >= 0 : null;
 
-                                            {/* ── OHLC + 涨跌幅展示 ──────────────────────────────── */}
-                                            {displayOHLC && (() => {
-                                                const result = calcChange(displayOHLC);
-                                                const closeUp = displayOHLC.close >= displayOHLC.open;
-                                                const changeUp = result ? result.change >= 0 : null;
-
-                                                return (
-                                                    <span
-                                                        className="text-sm text-slate-600 ml-4 flex items-center gap-1 flex-wrap">
+                                                    return (
+                                                        <span
+                                                            className="text-sm text-slate-600 ml-4 flex items-center gap-1 flex-wrap">
                                                         <span>
                                                             O: <span
                                                             className="font-medium">{displayOHLC.open.toFixed(3)}</span>
@@ -183,18 +181,19 @@ export default function Chart() {
                                                             </span>
                                                         </span>
 
-                                                        {/* 涨跌幅 */}
-                                                        {result && (
-                                                            <span
-                                                                className={`font-semibold ml-1 ${changeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                            {/* 涨跌幅 */}
+                                                            {result && (
+                                                                <span
+                                                                    className={`font-semibold ml-1 ${changeUp ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                                 {changeUp ? '▲' : '▼'}
-                                                                {' '}{Math.abs(result.change).toFixed(3)}
-                                                                {' '}({changeUp ? '+' : '-'}{Math.abs(result.pct).toFixed(2)}%)
+                                                                    {' '}{Math.abs(result.change).toFixed(3)}
+                                                                    {' '}({changeUp ? '+' : '-'}{Math.abs(result.pct).toFixed(2)}%)
                                                             </span>
-                                                        )}
+                                                            )}
                                                     </span>
-                                                );
-                                            })()}
+                                                    );
+                                                })()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -259,7 +258,8 @@ export default function Chart() {
                         <StockList onSelectAction={(s) => setSymbol(s)}/>
                     </aside>
                 </main>
-                <footer className="w-full shrink-0 border-t border-slate-200 bg-white py-1.5 text-center text-xs text-slate-500">
+                <footer
+                    className="w-full shrink-0 border-t border-slate-200 bg-white py-1.5 text-center text-xs text-slate-500">
                     Charts powered by{" "}
                     <a
                         href="https://www.tradingview.com/"
