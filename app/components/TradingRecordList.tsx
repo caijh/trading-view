@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 
 interface TradingRecord {
     stock_code: string | null;
@@ -32,6 +31,10 @@ interface FilterState {
     endDate: string;
 }
 
+interface TradingRecordListProps {
+    onClose: () => void;
+}
+
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 const formatPrice = (v: string | null) => {
@@ -51,7 +54,7 @@ const formatTime = (v: string | null) => {
     return Number.isNaN(date.getTime()) ? "--" : date.toLocaleString("zh-CN", { hour12: false });
 };
 
-export default function TradingRecordList() {
+export default function TradingRecordList({ onClose }: TradingRecordListProps) {
     const [filters, setFilters] = useState<FilterState>({
         type: "ALL",
         stockCode: "",
@@ -121,20 +124,28 @@ export default function TradingRecordList() {
     const hasPrev = data?.has_prev ?? false;
 
     return (
-        <div className="min-h-[calc(100vh-90px)] bg-slate-50 text-slate-900">
-            <div className="mx-auto p-4">
-                <header className="mb-4 flex items-center justify-between">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-lg shadow-xl w-[85vw] max-w-[1100px] max-h-[85vh] flex flex-col overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* 弹窗标题栏 */}
+                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div className="text-lg font-semibold">交易记录</div>
-                    <Link
-                        href="/chart"
-                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                    <button
+                        onClick={onClose}
+                        className="px-2 py-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 text-sm"
+                        title="关闭"
                     >
-                        返回图表
-                    </Link>
-                </header>
+                        ✕
+                    </button>
+                </div>
 
                 {/* 筛选栏 */}
-                <div className="mb-4 bg-white rounded-lg shadow-sm p-4 flex flex-wrap items-center gap-3">
+                <div className="px-4 py-3 border-b border-slate-200 flex flex-wrap items-center gap-3">
                     <label className="flex items-center gap-2 text-sm">
                         <span className="text-slate-500">方向</span>
                         <select
@@ -186,8 +197,8 @@ export default function TradingRecordList() {
                     </button>
                 </div>
 
-                {/* 表格 */}
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                {/* 表格区域 */}
+                <div className="overflow-auto flex-1">
                     {loading ? (
                         <div className="p-8 text-center text-sm text-slate-500">加载中...</div>
                     ) : error ? (
@@ -195,93 +206,91 @@ export default function TradingRecordList() {
                     ) : !data || data.items.length === 0 ? (
                         <div className="p-8 text-center text-sm text-slate-500">暂无交易记录</div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                    <tr>
-                                        <th className="px-4 py-3 font-medium">股票代码</th>
-                                        <th className="px-4 py-3 font-medium">股票名称</th>
-                                        <th className="px-4 py-3 font-medium">方向</th>
-                                        <th className="px-4 py-3 font-medium">买入价</th>
-                                        <th className="px-4 py-3 font-medium">卖出价</th>
-                                        <th className="px-4 py-3 font-medium">买入形态</th>
-                                        <th className="px-4 py-3 font-medium">卖出形态</th>
-                                        <th className="px-4 py-3 font-medium">创建时间</th>
-                                        <th className="px-4 py-3 font-medium">更新时间</th>
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider sticky top-0">
+                                <tr>
+                                    <th className="px-4 py-3 font-medium">股票代码</th>
+                                    <th className="px-4 py-3 font-medium">股票名称</th>
+                                    <th className="px-4 py-3 font-medium">方向</th>
+                                    <th className="px-4 py-3 font-medium">买入价</th>
+                                    <th className="px-4 py-3 font-medium">卖出价</th>
+                                    <th className="px-4 py-3 font-medium">买入形态</th>
+                                    <th className="px-4 py-3 font-medium">卖出形态</th>
+                                    <th className="px-4 py-3 font-medium">创建时间</th>
+                                    <th className="px-4 py-3 font-medium">更新时间</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {data.items.map((record, idx) => (
+                                    <tr key={(record.stock_code ?? "") + "-" + idx} className="hover:bg-slate-50">
+                                        <td className="px-4 py-3 font-medium">{record.stock_code || "--"}</td>
+                                        <td className="px-4 py-3">{record.stock_name || "--"}</td>
+                                        <td className="px-4 py-3">
+                                            {record.type === "LONG" ? (
+                                                <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded inline-block">
+                                                    Long
+                                                </span>
+                                            ) : record.type === "SHORT" ? (
+                                                <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-800 rounded inline-block">
+                                                    Short
+                                                </span>
+                                            ) : (
+                                                record.type || "--"
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3">{formatPrice(record.entry_price)}</td>
+                                        <td className="px-4 py-3">{formatPrice(record.exit_price)}</td>
+                                        <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.buy_patterns)}</td>
+                                        <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.sell_patterns)}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap">{formatTime(record.created_at)}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap">{formatTime(record.updated_at)}</td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {data.items.map((record, idx) => (
-                                        <tr key={(record.stock_code ?? "") + "-" + idx} className="hover:bg-slate-50">
-                                            <td className="px-4 py-3 font-medium">{record.stock_code || "--"}</td>
-                                            <td className="px-4 py-3">{record.stock_name || "--"}</td>
-                                            <td className="px-4 py-3">
-                                                {record.type === "LONG" ? (
-                                                    <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 rounded inline-block">
-                                                        Long
-                                                    </span>
-                                                ) : record.type === "SHORT" ? (
-                                                    <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-800 rounded inline-block">
-                                                        Short
-                                                    </span>
-                                                ) : (
-                                                    record.type || "--"
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">{formatPrice(record.entry_price)}</td>
-                                            <td className="px-4 py-3">{formatPrice(record.exit_price)}</td>
-                                            <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.buy_patterns)}</td>
-                                            <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.sell_patterns)}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">{formatTime(record.created_at)}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">{formatTime(record.updated_at)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    {/* 分页 */}
-                    {data && data.total > 0 && (
-                        <div className="px-4 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-                            <div className="flex items-center gap-2">
-                                <span>共 {data.total} 条</span>
-                                <span>·</span>
-                                <span>第 {data.page} / {data.page_num || 1} 页</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <label className="flex items-center gap-2 text-xs">
-                                    <span>每页</span>
-                                    <select
-                                        value={pageSize}
-                                        onChange={(e) => handlePageSizeChange(e.target.value)}
-                                        className="px-2 py-1 rounded-md border border-slate-300 text-xs bg-white"
-                                    >
-                                        {PAGE_SIZE_OPTIONS.map((size) => (
-                                            <option key={size} value={size}>{size}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                        disabled={!hasPrev}
-                                        className="px-3 py-1 rounded-md border border-slate-300 text-xs hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        上一页
-                                    </button>
-                                    <button
-                                        onClick={() => setPage((p) => p + 1)}
-                                        disabled={!hasNext}
-                                        className="px-3 py-1 rounded-md border border-slate-300 text-xs hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        下一页
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
                 </div>
+
+                {/* 分页 */}
+                {data && data.total > 0 && (
+                    <div className="px-4 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+                        <div className="flex items-center gap-2">
+                            <span>共 {data.total} 条</span>
+                            <span>·</span>
+                            <span>第 {data.page} / {data.page_num || 1} 页</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 text-xs">
+                                <span>每页</span>
+                                <select
+                                    value={pageSize}
+                                    onChange={(e) => handlePageSizeChange(e.target.value)}
+                                    className="px-2 py-1 rounded-md border border-slate-300 text-xs bg-white"
+                                >
+                                    {PAGE_SIZE_OPTIONS.map((size) => (
+                                        <option key={size} value={size}>{size}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                    disabled={!hasPrev}
+                                    className="px-3 py-1 rounded-md border border-slate-300 text-xs hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    上一页
+                                </button>
+                                <button
+                                    onClick={() => setPage((p) => p + 1)}
+                                    disabled={!hasNext}
+                                    className="px-3 py-1 rounded-md border border-slate-300 text-xs hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    下一页
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
