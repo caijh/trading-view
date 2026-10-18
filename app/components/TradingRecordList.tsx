@@ -14,6 +14,12 @@ interface TradingRecord {
     updated_at: string | null;
 }
 
+interface Account {
+    id: number;
+    name: string | null;
+    amount: number | null;
+}
+
 interface RecordListData {
     total: number;
     page_num: number;
@@ -25,6 +31,7 @@ interface RecordListData {
 }
 
 interface FilterState {
+    accountId: string;
     type: string;
     stockCode: string;
     startDate: string;
@@ -83,17 +90,35 @@ const renderProfitLoss = (record: TradingRecord) => {
 
 export default function TradingRecordList({ onClose }: TradingRecordListProps) {
     const [filters, setFilters] = useState<FilterState>({
+        accountId: "",
         type: "ALL",
         stockCode: "",
         startDate: "",
         endDate: "",
     });
     const [appliedFilters, setAppliedFilters] = useState<FilterState>(filters);
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [data, setData] = useState<RecordListData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const fetchAccounts = useCallback(async () => {
+        try {
+            const response = await fetch(`/api/trading-plus/account/list`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const json = await response.json();
+            if (json.code !== 0 || !json.data) {
+                throw new Error(json.msg || "加载账户列表失败");
+            }
+            setAccounts(json.data as Account[]);
+        } catch (e) {
+            console.error("Failed to fetch accounts:", e);
+        }
+    }, []);
 
     const fetchRecords = useCallback(async (p: number, ps: number, f: FilterState) => {
         setLoading(true);
@@ -103,6 +128,9 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                 page: String(p),
                 page_size: String(ps),
             });
+            if (f.accountId) {
+                params.set("account_id", f.accountId);
+            }
             if (f.type !== "ALL") {
                 params.set("type", f.type);
             }
@@ -132,6 +160,10 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
             setLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchAccounts().then(() => {});
+    }, [fetchAccounts]);
 
     useEffect(() => {
         fetchRecords(page, pageSize, appliedFilters).then(() => {});
@@ -173,6 +205,20 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
 
                 {/* 筛选栏 */}
                 <div className="px-4 py-3 border-b border-slate-200 flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                        <span className="text-slate-500">账户</span>
+                        <select
+                            value={filters.accountId}
+                            onChange={(e) => setFilters((prev) => ({ ...prev, accountId: e.target.value }))}
+                            className="px-2 py-1.5 rounded-md border border-slate-300 text-xs bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">全部</option>
+                            {accounts.map((acc) => (
+                                <option key={acc.id} value={acc.id}>{acc.name || acc.id}</option>
+                            ))}
+                        </select>
+                    </label>
+
                     <label className="flex items-center gap-2 text-sm">
                         <span className="text-slate-500">方向</span>
                         <select
