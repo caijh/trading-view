@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 interface TradingRecord {
+    id?: number | null;
+    account_id?: number | null;
+    account_name?: string | null;
+    account_amount?: number | null;
     stock_code: string | null;
     stock_name: string | null;
     type: string | null;
