@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { getProfitLoss } from "@/app/components/tradingRecordProfitLoss";
+
 interface TradingRecord {
     stock_code: string | null;
     stock_name: string | null;
@@ -61,30 +63,25 @@ const formatTime = (v: string | null) => {
     return Number.isNaN(date.getTime()) ? "--" : date.toLocaleString("zh-CN", { hour12: false });
 };
 
-const getProfitLoss = (type: string | null, entry: string | null, exit: string | null) => {
-    if (entry === null || entry === undefined || entry === "" || exit === null || exit === undefined || exit === "") {
-        return null;
-    }
-    const entryNum = Number(entry);
-    const exitNum = Number(exit);
-    if (Number.isNaN(entryNum) || Number.isNaN(exitNum)) {
-        return null;
-    }
-    const value = type === "SHORT" ? entryNum - exitNum : exitNum - entryNum;
-    const positive = value >= 0;
-    const text = `${positive ? "+" : ""}${value.toFixed(2)}`;
-    return { text, positive };
-};
-
 const renderProfitLoss = (record: TradingRecord) => {
     const pnl = getProfitLoss(record.type, record.entry_price, record.exit_price);
     if (!pnl) {
-        return <td className="px-4 py-3">--</td>;
+        return (
+            <>
+                <td className="px-4 py-3">--</td>
+                <td className="px-4 py-3">--</td>
+            </>
+        );
     }
     return (
-        <td className={`px-4 py-3 font-medium ${pnl.positive ? "text-green-600" : "text-red-600"}`}>
-            {pnl.text}
-        </td>
+        <>
+            <td className={`px-4 py-3 font-medium whitespace-nowrap ${pnl.positive ? "text-green-600" : "text-red-600"}`}>
+                {pnl.amountText}
+            </td>
+            <td className={`px-4 py-3 font-medium whitespace-nowrap ${pnl.positive ? "text-green-600" : "text-red-600"}`}>
+                {pnl.rateText}
+            </td>
+        </>
     );
 };
 
@@ -290,6 +287,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                     <th className="px-4 py-3 font-medium">买入形态</th>
                                     <th className="px-4 py-3 font-medium">卖出形态</th>
                                     <th className="px-4 py-3 font-medium">盈亏</th>
+                                    <th className="px-4 py-3 font-medium">盈亏率</th>
                                     <th className="px-4 py-3 font-medium">创建时间</th>
                                     <th className="px-4 py-3 font-medium">更新时间</th>
                                 </tr>
