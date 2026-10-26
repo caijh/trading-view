@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FaSyncAlt, FaGlasses } from "react-icons/fa";
 import toast from "react-hot-toast";
 import TradingRecordList from "@/app/components/TradingRecordList";
+import AccountList from "@/app/components/AccountList";
 
 // 定义股票数据接口，以匹配 API 返回的结构
 interface StockData {
@@ -39,6 +40,7 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showRecords, setShowRecords] = useState(false);
+    const [showAccounts, setShowAccounts] = useState(false);
 
     const fetchStocks = async () => {
         try {
@@ -446,10 +448,21 @@ export default function StockList({onSelectAction}: { onSelectAction: (stock: Ma
                 >
                     <span>交易记录</span>
                 </button>
+                <button
+                    title="View Accounts"
+                    onClick={() => setShowAccounts(true)}
+                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                >
+                    <span>账号</span>
+                </button>
             </div>
 
             {showRecords && (
                 <TradingRecordList onClose={() => setShowRecords(false)} />
+            )}
+
+            {showAccounts && (
+                <AccountList onClose={() => setShowAccounts(false)} />
             )}
         </div>
     );
