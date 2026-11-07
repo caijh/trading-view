@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import KLineChart, { OHLCWithPrevClose } from "@/app/components/KLineChart";
 import StockList from "@/app/components/StockList";
+import NewsPanel from "@/app/components/NewsPanel";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Chart() {
@@ -16,6 +17,7 @@ export default function Chart() {
     });
 
     const [showModal, setShowModal] = useState(false);
+    const [showNews, setShowNews] = useState(false);
     const [analysisData, setAnalysisData] = useState<any>(null);
     const handleAnalysisData = (data: any) => {
         setAnalysisData(data);
@@ -208,6 +210,13 @@ export default function Chart() {
                                         <i className="fas fa-chart-line"></i>
                                     </button>
                                     <div className="text-sm text-slate-500">1D</div>
+                                    <button
+                                        className="text-sm text-slate-600 bg-white border border-slate-300 px-2.5 py-1 rounded-md hover:bg-slate-50 hover:border-slate-400 transition-colors"
+                                        onClick={() => setShowNews(true)}
+                                        title="查看最近 3 天新闻"
+                                    >
+                                        News
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -377,6 +386,13 @@ export default function Chart() {
                             <i className="fas fa-times"></i>
                         </button>
                     </div>
+                )}
+                {showNews && (
+                    <NewsPanel
+                        symbol={symbol.ticker}
+                        name={symbol.name}
+                        onClose={() => setShowNews(false)}
+                    />
                 )}
             </div>
         </div>
