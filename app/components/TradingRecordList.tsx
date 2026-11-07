@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { getProfitLoss } from "@/app/components/tradingRecordProfitLoss";
+import { formatQuantity, getProfitLoss } from "@/app/components/tradingRecordProfitLoss";
 
 interface TradingRecord {
     id?: number | null;
@@ -12,9 +12,9 @@ interface TradingRecord {
     stock_code: string | null;
     stock_name: string | null;
     type: string | null;
-    entry_price: string | null;
-    exit_price: string | null;
-    holding_num: string | null;
+    entry_price: string | number | null;
+    exit_price: string | number | null;
+    holding_num: string | number | null;
     buy_patterns: string[] | null;
     sell_patterns: string[] | null;
     created_at: string | null;
@@ -51,10 +51,10 @@ interface TradingRecordListProps {
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const formatPrice = (v: string | null) => {
+const formatPrice = (v: string | number | null | undefined) => {
     if (v === null || v === undefined || v === "") return "--";
     const num = Number(v);
-    return Number.isNaN(num) ? "--" : num.toFixed(2);
+    return Number.isFinite(num) ? num.toFixed(2) : "--";
 };
 
 const formatPatterns = (patterns: string[] | null) => {
@@ -69,7 +69,7 @@ const formatTime = (v: string | null) => {
 };
 
 const renderProfitLoss = (record: TradingRecord) => {
-    const pnl = getProfitLoss(record.type, record.entry_price, record.exit_price);
+    const pnl = getProfitLoss(record.type, record.entry_price, record.exit_price, record.holding_num);
     if (!pnl) {
         return (
             <>
@@ -292,7 +292,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                     <th className="px-4 py-3 font-medium">数量</th>
                                     <th className="px-4 py-3 font-medium">买入形态</th>
                                     <th className="px-4 py-3 font-medium">卖出形态</th>
-                                    <th className="px-4 py-3 font-medium">盈亏</th>
+                                    <th className="px-4 py-3 font-medium">总盈亏</th>
                                     <th className="px-4 py-3 font-medium">盈亏率</th>
                                     <th className="px-4 py-3 font-medium">创建时间</th>
                                     <th className="px-4 py-3 font-medium">更新时间</th>
@@ -318,7 +318,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                         </td>
                                         <td className="px-4 py-3">{formatPrice(record.entry_price)}</td>
                                         <td className="px-4 py-3">{formatPrice(record.exit_price)}</td>
-                                        <td className="px-4 py-3">{record.holding_num ? Number(record.holding_num).toFixed(2) : "--"}</td>
+                                        <td className="px-4 py-3">{formatQuantity(record.holding_num)}</td>
                                         <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.buy_patterns)}</td>
                                         <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.sell_patterns)}</td>
                                         {renderProfitLoss(record)}
