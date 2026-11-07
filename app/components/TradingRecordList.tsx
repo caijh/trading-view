@@ -12,6 +12,7 @@ interface TradingRecord {
     type: string | null;
     entry_price: string | null;
     exit_price: string | null;
+    holding_num: string | null;
     buy_patterns: string[] | null;
     sell_patterns: string[] | null;
     created_at: string | null;
@@ -291,6 +292,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                     <th className="px-4 py-3 font-medium">方向</th>
                                     <th className="px-4 py-3 font-medium">买入价</th>
                                     <th className="px-4 py-3 font-medium">卖出价</th>
+                                    <th className="px-4 py-3 font-medium">数量</th>
                                     <th className="px-4 py-3 font-medium">买入形态</th>
                                     <th className="px-4 py-3 font-medium">卖出形态</th>
                                     <th className="px-4 py-3 font-medium">盈亏</th>
@@ -318,6 +320,7 @@ export default function TradingRecordList({ onClose }: TradingRecordListProps) {
                                         </td>
                                         <td className="px-4 py-3">{formatPrice(record.entry_price)}</td>
                                         <td className="px-4 py-3">{formatPrice(record.exit_price)}</td>
+                                        <td className="px-4 py-3">{record.holding_num ? Number(record.holding_num).toFixed(2) : "--"}</td>
                                         <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.buy_patterns)}</td>
                                         <td className="px-4 py-3 max-w-[220px] break-words">{formatPatterns(record.sell_patterns)}</td>
                                         {renderProfitLoss(record)}
